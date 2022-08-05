@@ -35,12 +35,12 @@
 -- _ prefix means internal function
 local _=require"lib" -- must be first line
 local the={  -- Important! First letter of each slot name must be unique.
-     about = {what      = "XAI.LUA",
+     about = {what      = "xai.lua",
               why       = "Multi-objective semi-supervised explanation",
               who       = "Tim Menzies <timm@ieee.org>",
               when      = 2022,
-              copyright = "BSD-2 clause license",
-              how       = "USAGE: lua xai.lua -[bFfgmnpsS] [arg]"
+              how       = "USAGE: lua xai.lua -[bFfgmnpsS] [arg]",
+              copyright = "BSD-2 clause license"
              },
      Balance= 4,        -- for delta, ratio rest:best 
      bins   = 16,       -- for bins, initial #bins  (before merging)
