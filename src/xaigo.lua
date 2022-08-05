@@ -117,12 +117,8 @@ local function run(str)
   if true ~= go[str]() then fails=fails+1; print("FAIL",str) end
   for k,v in pairs(saved) do the[k]=v end  end 
 
-if pcall(debug.getlocal,4,1) then -- If code loaded via a `require` statement,
-  return XAI                      -- Then just return the names.
-else                              -- Else...
-   the = cli(the)                                           -- update settings
-   local todo ={}; for k,_ in pairs(go) do push(todo,k) end -- Run tests.
-   for _,k in pairs(the.go=="all" and sort(todo) or {the.go}) do run(k) end
-   rogues()       -- Check for rogue local.
-   os.exit(fails) -- Report failures were seen.
-end
+the = cli(the)                                           -- update settings
+local todo ={}; for k,_ in pairs(go) do push(todo,k) end -- Run tests.
+for _,k in pairs(the.go=="all" and sort(todo) or {the.go}) do run(k) end
+rogues()       -- Check for rogue local.
+os.exit(fails) -- Report failures were seen.
