@@ -23,21 +23,15 @@ htmls:  $(subst .lua,.html,../docs/$(subst lua ,html ../docs/,$(LUAS))) ## make 
 	cp -r docs/* $(WEB)/
 	(cd $(WEB); git  add *; git commit -am save; git push)
 
-../docs/%.html: %.lua  README.md ## make html
+../docs/%.html: %.lua  ## make html
 	gawk -f $R/etc/lua2doc.awk $< > tmp.lua
 	echo "docco: $< -> $@"
-	docco -l classic  tmp.lua > /dev/null
+	docco -l classic -o $R/docs tmp.lua > /dev/null
 	gawk 'sub(/>tmp.lua</,">$(basename $<)<") 1 ' $R/docs/tmp.html > $@
-	cp $R/etc/docco.css docs/docco.css
-
-../docs/%.md : %.lua  README.md
-	echo $< 2>&1
-	gawk -f 2md.awk $< > /tmp/page 2> /tmp/toc
-	gawk 'sub(/TABLE.OF.CONTENTS/,"",$$0) {system("cat /tmp/toc")} 1' /tmp/page > $@
-
+	cp $R/etc/docco.css $R/docs/docco.css
 
 ../docs/%.pdf : %.lua  ## make pdf
-	@mkdir -p docs
+	@mkdir -p $R/docs
 	@echo "pdf-ing $@ ... "
 	@a2ps -Bjr             \
 		-q                    \
