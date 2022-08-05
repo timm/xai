@@ -33,17 +33,19 @@
 -- 
 -- convenntions "is" [refix is a bookeam. "n" is a number, sprefix=string
 -- _ prefix means internal function
-local the= {
-     about ={ what = "XAI.LUA",
-              why  = "Multi-objective semi-supervised explanation",
-              who  = "Tim Menzies <timm@ieee.org>",
-              when = 2022,
+local _=require"lib" -- must be first line
+local the={  -- Important! First letter of each slot name must be unique.
+     about = {what      = "XAI.LUA",
+              why       = "Multi-objective semi-supervised explanation",
+              who       = "Tim Menzies <timm@ieee.org>",
+              when      = 2022,
               copyright = "BSD-2 clause license",
-              how  = "USAGE: lua xai.lua -[bFfgmnpsS] [arg]"},
+              how       = "USAGE: lua xai.lua -[bFfgmnpsS] [arg]"
+             },
      Balance= 4,        -- for delta, ratio rest:best 
      bins   = 16,       -- for bins, initial #bins  (before merging)
      Far    = .95,      -- for far, how far to look for distant pole
-     files  = "../data/auto93.csv",
+     file   = "../data/auto93.csv",
      go     = "pass",   -- start up action
      min    = .5,       -- for bestOrRest, cluster down to N^min groupings
      ratios = 512,      -- for RATIO, max sample size
@@ -54,20 +56,19 @@ local the= {
      }
 ---- ---- ---- ---- Names
 ---- Misc general functions
-local _=require"lib"
-local any,big,cat,chat,cli,coerce=_.any,_.big,_.cat,_.chat,_.cli,_.coerce
-local csv,csv2data,fmt,get,gt= _.csv,_.csv2data,_.fmt,_.get,_.gt
-local klass,lines,lt,many,map = _.klass,_.lines,_.lt,_.many,_.map
-local obj,per,push,rand,rev,rnd = _.obj,_.per,_.push,_.rand,_.rev,_.rnd
-local rogues,same,shuffle,slice,sort=_.rogues,_.same,_.shuffle,_.slice,_.sort
-local values,words=_.values,_.words
+local any,big,cat,chat,cli,coerce    = _.any,_.big,_.cat,_.chat,_.cli,_.coerce
+local csv,fmt,get,gt                 = _.csv,_.fmt,_.get,_.gt
+local klass,lines,lt,many,map        = _.klass,_.lines,_.lt,_.many,_.map
+local obj,per,push,rand,rev,rnd      = _.obj,_.per,_.push,_.rand,_.rev,_.rnd
+local rogues,same,shuffle,slice,sort = _.rogues,_.same,_.shuffle,_.slice,_.sort
+local values,words                   = _.values,_.words
 
 --- learning modules
 local bins,half,how
 
 ---- Klasses
-local ABOUT,DATA,NOM= klass"ABOUT", klass"DATA", klass"NOM"
-local RATIO,ROW,XY  = klass"RATIO",klass"ROW",klass"XY"
+local ABOUT,DATA,NOM = klass"ABOUT", klass"DATA", klass"NOM"
+local RATIO,ROW,XY   = klass"RATIO",klass"ROW",klass"XY"
 
 ---- ---- ---- ---- Classes
 -- In this code,  function arguments offer some type hints. 
@@ -103,8 +104,7 @@ function NOM:new(  sName,iAt) return _col(sName,iAt) end
 
 -- **ROW holds one record of data.**
 function ROW:new(about,t)
-  return {
-          _about=about,       -- pointer to background column info
+  return {_about=about,       -- pointer to background column info
           cells=t,            -- raw values
           cooked=nil,         -- for (e.g) discretized values
           rank=0,             -- position between 1..100
@@ -159,7 +159,7 @@ function DATA:clone(t)
 function DATA:add(t)
   if   self.about 
   then push(self.rows,self.about:add(t)) 
-  else self.about=ABOUT(t) end end
+  else self.about = ABOUT(t) end end
 
 -- **Add a row of values, across all columns.**    
 -- This code implements _row sharing_; i.e. once a row is created,
