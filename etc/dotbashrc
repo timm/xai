@@ -7,12 +7,12 @@ hi() {
   tput bold; tput setaf 5
   cat<<-'EOF'
 
-  .,::      .: :::.     :::
-  `;;;,  .,;;  ;;`;;    ;;;
-    '[[,,[['  ,[[ '[[,  [[[
-     Y$$$P   c$$$cc$$$c $$$
-   oP"``"Yo,  888   888,888
-,m"       "Mm,YMM   ""` MMM
+  .,::      .:  :::.      :::
+  `;;;,  .,;;   ;;`;;     ;;;
+    '[[,,[['   ,[[ '[[,   [[[
+     Y$$$P    c$$$cc$$$c  $$$
+   oP"``"Yo,   888   888, 888
+,m"       "Mm, YMM   ""`  MMM
 
 	EOF
   tput bold; tput setaf 241
@@ -27,15 +27,15 @@ here="$(dirname $(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd ))"
 alias ..='cd ..'
 alias ...='cd ../../../'
 
-alias bye="gp; tmux detach"
+#alias bye="gp; tmux detach"
 alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias gp="git add *;git commit -am save;git push;git status"
 alias grep='grep --color=auto'
 alias h="history"
-alias hello="git pull"
+#alias hello="git pull"
 alias ls="ls -G"
-alias tmux="tmux -f $here/etc/dottmux"
+#alias tmux="tmux -f $here/etc/dottmux"
 alias vi="vim -u $here/etc/dotvimrc "
 alias vims="vim +PluginInstall +qall"         
 
