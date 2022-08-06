@@ -20,6 +20,11 @@ function l.klass(sName,     new,self,t)
 -- Do nothing. 
 function l.same(x) return x end
 
+-- Fill in defaults in a list
+function l.with(settings, updates) 
+  for k,v in pairs(updates or {}) do settings[k]=v end
+  return settings end
+
 ---- ---- ---- Maths
 -- Large number
 l.big=math.huge
@@ -31,6 +36,26 @@ l.rand=math.random
 function l.rnd(num, places)
   local mult = 10^(places or 3)
   return math.floor(num * mult + 0.5) / mult end
+
+-- print a horizontal quartile chart (assumes `t` is sorted)
+function l.tiles(t, args)
+  args = l.with({ lo=0, hi=1, width=32, 
+                  pers={.25,.5,.75}, -- percentiles to show RHS
+                  rank=1           -- what to show LHS
+                },args)
+  local norm = function(n) return (n-args.lo) / (args.hi-args.lo) end
+  local at   = function(n) return math.floor(args.width*norm(n)) end
+  local pos  = function(p) return t[1] + p*(t[#t] - t[1]) end
+  local s={}
+  for i=1,args.width do s[i]=" " end
+  for p = .1,.3,.01 do s[at(l.per(t,p))] = "." end 
+  for p = .7,.9,.01 do s[at(l.per(t,p))] = "." end 
+  s[at(l.per(t,.5))] = "|"
+  s[1], s[#s] = "|","|"
+  return {rank = l.fmt("%s %15s",args.rank,args.txt),
+          str  = table.concat(s), 
+          mid  = l.per(t,.5),
+          per  = l.map(args.pers, function (p) return l.per(t,p) end)} end 
 
 ---- ---- ---- Lists
 -- Return any item (selected at random) from list `t`.

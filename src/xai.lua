@@ -68,7 +68,7 @@ local csv,fmt,get,gt                 = _.csv,_.fmt,_.get,_.gt
 local klass,lines,lt,many,map        = _.klass,_.lines,_.lt,_.many,_.map
 local obj,per,push,rand,rev,rnd      = _.obj,_.per,_.push,_.rand,_.rev,_.rnd
 local rogues,same,shuffle,slice,sort = _.rogues,_.same,_.shuffle,_.slice,_.sort
-local values,words                   = _.values,_.words
+local tiles,values,with,words        = _.tiles,_.values,_.with,_.words
 
 --- learning modules
 local bins,half,how
@@ -286,7 +286,20 @@ function DATA:ranked()
  
 function DATA:evaled()
   return sort(map(self.rows, function(row) 
-                          if row.evaled then chat(row.cells); return row.rank end end)) end
+                          if row.evaled then return row.rank end end)) end
+
+-- class method for displaying many tiles
+function RATIO.tiles(ratios,  args)
+  local lo,hi
+  for _,ratio in pairs(ratios) do 
+    local t = ratio:holds()
+    lo = lo and math.min(lo, t[1]) or t[1]
+    hi = hi and math.max(hi, t[#t]) or t[#t] end
+  for _,ratio in pairs(ratios) do 
+    local tile = tiles(ratio:holds(), 
+                    with({txt=ratio.txt,lo=lo,hi=hi,
+                          rank=ratio.rank},args))
+    print(tile.rank, tile.str, cat(map(tile.per, rnd))) end end
 
 ---- ---- ---- Dist
 -- Return 0..1 for distance between two rows using `cols`
@@ -331,14 +344,14 @@ function half.splits(rows)
 -- _first_ non-best half (as _worst_). Return the
 -- final best and the first worst (so the best best and the worst
 -- worst).
-function half._splits(rows,  rowAbove,          stop,worst)
-  stop = stop or 6
+function half._splits(rows,  rowAbove,          stop,bottom)
+  stop = stop or 3
   if   #rows < stop
-  then return rows,worst or {} -- rows is shriving best
+  then return rows, bottom or {} -- rows is shriving best
   else local A,B,As,Bs = half._split(rows,rowAbove)
        if   B < A
-       then return half._splits(As,A,stop,worst or Bs)
-       else return half._splits(Bs,B,stop,worst or As) end end end
+       then return half._splits(As, A, stop, bottom or Bs)
+       else return half._splits(Bs, B, stop, bottom or As) end end end
 
 -- Do one split. To reduce the cost of this search,
 -- only apply it to `some` of the rows (controlled by `the.Some`).
@@ -358,6 +371,16 @@ function half._split(rows,  rowAbove)
     push(n < #rows/2 and As or Bs, rowx.row) end
   return A,B,As,Bs,c end
 
+function half._tree(rows,  rowAbove,stop,out)
+  stop = stop or (#rows)^the.min
+  out  = out or {}
+  if   #rows < stop
+  then push(out,rows)
+  else local A,B,As,Bs = half._split(rows,rowAbove)
+       half._tree(As,A,stop,out)
+       half._tree(Bs,B,stop,out) end 
+  return out end 
+
 ---- ---- ---- Discretization
 -- **Divide column values into many bins, then merge unneeded ones**   
 -- When reading this code, remember that NOMinals can't get rounded or merged
@@ -371,7 +394,7 @@ function bins.find(rows,col)
       n = n+1
       local bin = col.isNom and x or bins._bin(col,x)
       local xy  = xys[bin] or XY(col.txt,col.at, x)
-      add2(xy, x, row.label)
+      xy:add(x, row.label)
       xys[bin] = xy end end
   xys = sort(xys, lt"xlo")
   return col.isNom and xys or bins._merges(xys,n^the.min) end
@@ -405,10 +428,10 @@ function bins._merges(xys0,nMin)
 function bins._merged(xy1,xy2,nMin)   
   local i,j= xy1.y, xy2.y
   local k = NOM(i.txt, i.at)
-  for x,n in pairs(i.has) do add(k,x,n) end
-  for x,n in pairs(j.has) do add(k,x,n) end
+  for x,n in pairs(i.has) do k:add(x,n) end
+  for x,n in pairs(j.has) do k:add(x,n) end
   local tooSmall   = i.n < nMin or j.n < nMin 
-  local tooComplex = div(k) <= (i.n*div(i) + j.n*div(j))/k.n 
+  local tooComplex = k:div() <= (i.n*i:div() + j.n*j:div())/k.n 
   if tooSmall or tooComplex then 
     return XY(xy1.txt,xy1.at, xy1.xlo, xy2.xhi, k) end end 
 
@@ -416,9 +439,7 @@ function bins._merged(xy1,xy2,nMin)
 -- **Find the xy range that most separates best from rest**      
 -- Then call yourself recursively on the rows selected by the that range.   
 local how={}
-function how.rules(data) return how._rules1(data, data.rows) end
-
-function how._rules1(data,rowsAll, nStop,xys)
+function how.rules(data, nStop,xys)
   xys = xys or {}
   nStop = nStop or the.stop
   if #data.rows > nStop then 
@@ -427,9 +448,7 @@ function how._rules1(data,rowsAll, nStop,xys)
       local rows1 = how._selects(xy, data.rows)
       if rows1 then
         push(xys,xy)
-        print(cat(how._evals(rowsAll)),
-          xyShow(xy), how._nevaled(rowsAll),#rows1)
-        return how._rules1(clone(data,rows1),rowsAll, nStop,xys) end end  end
+        return how.rules(data:clone(rows1),nStop,xys) end end end
   return xys,data end 
 
 -- Return best xy across all columns and ranges.
