@@ -19,9 +19,9 @@ ready:  ##  commit to main
 
 LUAS = $(wildcard [a-z]*.lua)
 
-htmls:  $(subst .lua,.html,../docs/$(subst lua ,html ../docs/,$(LUAS))) ## make all htmls
-	cp -r docs/* $(WEB)/
-	(cd $(WEB); git  add *; git commit -am save; git push)
+docs : pdfs htmls ## all docs
+pdfs : ../docs/xai.pdf ../docs/lib.pdf ../docs/xaigo.pdf 
+htmls: ../docs/xai.html ../docs/lib.html ../docs/xaigo.html
 
 ../docs/%.html: %.lua  ## make html
 	gawk -f $R/etc/lua2doc.awk $< > tmp.lua

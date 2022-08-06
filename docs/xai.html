@@ -61,25 +61,29 @@ _ prefix means internal function</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">local</span> the= {
-     about ={ what = <span class="hljs-string">&quot;XAI.LUA&quot;</span>,
-              why  = <span class="hljs-string">&quot;Multi-objective semi-supervised explanation&quot;</span>,
-              who  = <span class="hljs-string">&quot;Tim Menzies &lt;timm@ieee.org&gt;&quot;</span>,
-              when = <span class="hljs-number">2022</span>,
-              copyright = <span class="hljs-string">&quot;BSD-2 clause license&quot;</span>,
-              how  = <span class="hljs-string">&quot;USAGE: lua xai.lua -[bFfgmnpsS] [arg]&quot;</span>},
-     Balance= <span class="hljs-number">4</span>,        <span class="hljs-comment">-- for delta, ratio rest:best </span>
-     bins   = <span class="hljs-number">16</span>,       <span class="hljs-comment">-- for bins, initial #bins  (before merging)</span>
-     Far    = <span class="hljs-number">.95</span>,      <span class="hljs-comment">-- for far, how far to look for distant pole</span>
-     files  = <span class="hljs-string">&quot;../data/auto93.csv&quot;</span>,
-     go     = <span class="hljs-string">&quot;pass&quot;</span>,   <span class="hljs-comment">-- start up action</span>
-     <span class="hljs-built_in">min</span>    = <span class="hljs-number">.5</span>,       <span class="hljs-comment">-- for bestOrRest, cluster down to N^min groupings</span>
-     ratios = <span class="hljs-number">512</span>,      <span class="hljs-comment">-- for RATIO, max sample size</span>
-     p      = <span class="hljs-number">2</span>,        <span class="hljs-comment">-- for dist, distance coeffecient </span>
-     seed   = <span class="hljs-number">10019</span>,    <span class="hljs-comment">-- random number seed</span>
-     Some   = <span class="hljs-number">512</span>,      <span class="hljs-comment">-- for far, how many rows to explore </span>
-     stop   = <span class="hljs-number">6</span>         <span class="hljs-comment">-- for delta, min row size.</span>
-     }</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">local</span> _=<span class="hljs-built_in">require</span><span class="hljs-string">&quot;lib&quot;</span> <span class="hljs-comment">-- must be first line</span>
+<span class="hljs-keyword">local</span> help=<span class="hljs-string">[[
+
+XAI: Multi-objective semi-supervised explanation
+(c) 2022 Tim Menzies &lt;timm@ieee.org&gt; BSD-2 license
+
+USAGE: lua xiago [OPTIONS]
+
+OPTIONS:
+ -B  --Balance  for delta, ration rest:best              = 4
+ -b  --bins     for bins, initial #bins (before merging) = 16
+ -F  --Far      for far, how far to look for distant pol = .95
+ -f  --file     data csv source           = ../data/auto93.csv
+ -g  --go       start-up action                          = pass
+ -h  --help     show help                                = false
+ -m  --min      for half, cluster down to n^min          = .5
+ -r  --ratios   for RATIO, max sample size               = 512
+ -p  --p        for dist, distance coefficient           = 2
+ -s  --seed     random number seed                       = 10019
+ -S  --Some     for far, how many rows to explore        = 512
+ -s  --stop     for delta, min row size                  = 6
+
+Boolean flags need no arguments e.g. &quot;-h&quot; sets &quot;help&quot; to &quot;true&quot;.]]</span></pre></div></div>
             
         </li>
         
@@ -94,6 +98,12 @@ _ prefix means internal function</p>
 
             </div>
             
+            <div class="content"><div class='highlight'><pre>
+
+<span class="hljs-keyword">local</span> the={}
+help:<span class="hljs-built_in">gsub</span>(<span class="hljs-string">&quot;\n [-][%S]+[%s]+[-][-]([%S]+)%s[^\n]+= ([%S]+)&quot;</span>,
+          <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(k,x)</span></span> the[k] = _.coerce(x) <span class="hljs-keyword">end</span>)</pre></div></div>
+            
         </li>
         
         
@@ -107,13 +117,12 @@ _ prefix means internal function</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">local</span> _=<span class="hljs-built_in">require</span><span class="hljs-string">&quot;lib&quot;</span>
-<span class="hljs-keyword">local</span> any,big,cat,chat,cli,coerce=_.any,_.big,_.cat,_.chat,_.cli,_.coerce
-<span class="hljs-keyword">local</span> csv,csv2data,fmt,get,gt= _.csv,_.csv2data,_.fmt,_.get,_.gt
-<span class="hljs-keyword">local</span> klass,<span class="hljs-built_in">lines</span>,lt,many,map = _.klass,_.<span class="hljs-built_in">lines</span>,_.lt,_.many,_.map
-<span class="hljs-keyword">local</span> obj,per,push,rand,rev,rnd = _.obj,_.per,_.push,_.rand,_.rev,_.rnd
-<span class="hljs-keyword">local</span> rogues,same,shuffle,slice,<span class="hljs-built_in">sort</span>=_.rogues,_.same,_.shuffle,_.slice,_.<span class="hljs-built_in">sort</span>
-<span class="hljs-keyword">local</span> values,words=_.values,_.words</pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">local</span> any,big,cat,chat,cli,coerce    = _.any,_.big,_.cat,_.chat,_.cli,_.coerce
+<span class="hljs-keyword">local</span> csv,fmt,get,gt                 = _.csv,_.fmt,_.get,_.gt
+<span class="hljs-keyword">local</span> klass,<span class="hljs-built_in">lines</span>,lt,many,map        = _.klass,_.<span class="hljs-built_in">lines</span>,_.lt,_.many,_.map
+<span class="hljs-keyword">local</span> obj,per,push,rand,rev,rnd      = _.obj,_.per,_.push,_.rand,_.rev,_.rnd
+<span class="hljs-keyword">local</span> rogues,same,shuffle,slice,<span class="hljs-built_in">sort</span> = _.rogues,_.same,_.shuffle,_.slice,_.<span class="hljs-built_in">sort</span>
+<span class="hljs-keyword">local</span> values,words                   = _.values,_.words</pre></div></div>
             
         </li>
         
@@ -145,8 +154,8 @@ _ prefix means internal function</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">local</span> ABOUT,DATA,NOM= klass<span class="hljs-string">&quot;ABOUT&quot;</span>, klass<span class="hljs-string">&quot;DATA&quot;</span>, klass<span class="hljs-string">&quot;NOM&quot;</span>
-<span class="hljs-keyword">local</span> RATIO,ROW,XY  = klass<span class="hljs-string">&quot;RATIO&quot;</span>,klass<span class="hljs-string">&quot;ROW&quot;</span>,klass<span class="hljs-string">&quot;XY&quot;</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">local</span> ABOUT, DATA, NOM = klass<span class="hljs-string">&quot;ABOUT&quot;</span>, klass<span class="hljs-string">&quot;DATA&quot;</span>, klass<span class="hljs-string">&quot;NOM&quot;</span>
+<span class="hljs-keyword">local</span> RATIO, ROW,  XY  = klass<span class="hljs-string">&quot;RATIO&quot;</span>, klass<span class="hljs-string">&quot;ROW&quot;</span>,  klass<span class="hljs-string">&quot;XY&quot;</span></pre></div></div>
             
         </li>
         
@@ -239,8 +248,7 @@ Any arguments with more than two spaces before it are local vals (so don’t use
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ROW:new</span><span class="hljs-params">(about,t)</span></span>
-  <span class="hljs-keyword">return</span> {
-          _about=about,       <span class="hljs-comment">-- pointer to background column info</span>
+  <span class="hljs-keyword">return</span> {_about=about,       <span class="hljs-comment">-- pointer to background column info</span>
           cells=t,            <span class="hljs-comment">-- raw values</span>
           cooked=<span class="hljs-literal">nil</span>,         <span class="hljs-comment">-- for (e.g) discretized values</span>
           rank=<span class="hljs-number">0</span>,             <span class="hljs-comment">-- position between 1..100</span>
@@ -397,7 +405,7 @@ anything that is <code>skipped</code>.</p>
             <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">DATA:add</span><span class="hljs-params">(t)</span></span>
   <span class="hljs-keyword">if</span>   <span class="hljs-built_in">self</span>.about 
   <span class="hljs-keyword">then</span> push(<span class="hljs-built_in">self</span>.rows,<span class="hljs-built_in">self</span>.about:add(t)) 
-  <span class="hljs-keyword">else</span> <span class="hljs-built_in">self</span>.about=ABOUT(t) <span class="hljs-keyword">end</span> <span class="hljs-keyword">end</span></pre></div></div>
+  <span class="hljs-keyword">else</span> <span class="hljs-built_in">self</span>.about = ABOUT(t) <span class="hljs-keyword">end</span> <span class="hljs-keyword">end</span></pre></div></div>
             
         </li>
         
@@ -1067,7 +1075,7 @@ same as <code>rows</code>, then return nil since they rule is silly).</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">return</span> {the=the, csv2data=csv2data,
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">return</span> {the=the, help=help, csv2data=csv2data,
         ABOUT=ABOUT, COL=COL, DATA=DATA, NOM=NOM, 
         RATIO=RATIO, ROW=ROW, XY=XY, 
         bins=bins,  half=half,  how=how}</pre></div></div>
