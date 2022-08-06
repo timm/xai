@@ -442,12 +442,15 @@ local how={}
 function how.rules(data, nStop,xys)
   xys = xys or {}
   nStop = nStop or the.stop
+  print("11",#data.rows,the.stop)
   if #data.rows > nStop then 
     local xy = how._xyBest(data)
     if xy then 
+      print("xy",cat(xy))
       local rows1 = how._selects(xy, data.rows)
       if rows1 then
         push(xys,xy)
+        print(#rows1,the.stop)
         return how.rules(data:clone(rows1),nStop,xys) end end end
   return xys,data end 
 

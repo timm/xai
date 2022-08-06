@@ -76,8 +76,8 @@ function quota(   halving,guess)
 function rule()
   local data=csv2data("../data/auto93.csv") 
   data:ranked()
-  local xys,best = how.rules(data)
-  chat(xys)
+  local xys,data1 = how.rules(data)
+  print(#data1.rows, cat(xys))
   end
 
 ---- ---- ---- ---- Start-up
