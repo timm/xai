@@ -1,20 +1,21 @@
-local _=require"lib"
+local _ = require"lib"
 local any,big,cat,chat,cli,coerce    = _.any,_.big,_.cat,_.chat,_.cli,_.coerce
 local csv,fmt,get,gt                 = _.csv,_.fmt,_.get,_.gt
-local klass,lines,lt,many,map        = _.klass,_.lines,_.lt,_.many,_.map
+local klass,lines,lt,main,many,map   = _.klass,_.lines,_.lt,_.main,_.many,_.map
 local obj,per,push,rand,rev,rnd      = _.obj,_.per,_.push,_.rand,_.rev,_.rnd
 local rogues,same,shuffle,slice,sort = _.rogues,_.same,_.shuffle,_.slice,_.sort
 local values,words                   = _.values,_.words
 
-local _=require"xai"
-local the ,csv2data  =  _.the, _.csv2data
-local ABOUT,DATA,NOM = _.ABOUT, _.DATA,_.NOM
-local RATIO,ROW,XY   = _.RATIO,_.ROW,_.XY
-local bins,half,how  = _.bins, _.half, _.how
+local _ = require"xai"
+local the, help,csv2data =  _.the, _.help, _.csv2data
+local ABOUT,DATA,NOM     = _.ABOUT, _.DATA,_.NOM
+local RATIO,ROW,XY       = _.RATIO,_.ROW,_.XY
+local bins,half,how      = _.bins, _.half, _.how
 
 ---- ---- ---- ---- Tests
 -- Tests fail if they do not return `true`.
 local go={}
+
 function go.pass() return true end
 
 function go.the() chat(the); return true end
@@ -105,20 +106,4 @@ function go.rules(      data)
   return true end
     
 ---- ---- ---- ---- Start-up
--- Counter for test failures
-local fails=0
-
--- Run one test. Beforehand, reset random number seed. Afterwards,
--- reset the settings to whatever they were before the test.
-local function run(str)
-  if type(go[str])~="function" then return print("?? unknown",str) end
-  local saved={};for k,v in pairs(the) do saved[k]=v end
-  math.randomseed(the.seed)
-  if true ~= go[str]() then fails=fails+1; print("FAIL",str) end
-  for k,v in pairs(saved) do the[k]=v end  end 
-
-the = cli(the)                                           -- update settings
-local todo ={}; for k,_ in pairs(go) do push(todo,k) end -- Run tests.
-for _,k in pairs(the.go=="all" and sort(todo) or {the.go}) do run(k) end
-rogues()       -- Check for rogue local.
-os.exit(fails) -- Report failures were seen.
+main(help,the,go)

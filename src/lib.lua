@@ -142,6 +142,29 @@ function l.words(str,sep,fun,      t)
   sep = l.fmt("([^%s]+)",sep)
   t={};for x in str:gmatch(sep) do t[1+#t]=fun(x) end;return t end
 
+-- Update settings from command line. Run start up functions.
+-- Before running one function,   reset random number seed. Afterwards,
+-- reset settings to whatever they were before the action.
+function l.main(sHelp,settings,funs)
+  settings = l.cli(settings)                        
+  if settings.help 
+  then os.exit(print(sHelp:gsub("[%u][%u%d]+","\27[1;36m%1\27[0m")
+                          :gsub(" ([-][%S]+)"," \27[1;33m%1\27[0m"),"")) end
+  local fails=0
+  local saved={};for slot,value in pairs(settings) do saved[slot]=value end
+  local todo ={}; for k,_ in pairs(funs) do l.push(todo,k) end -- Run tests.
+  todo = settings.go=="all" and l.sort(todo) or {settings.go}
+  for _,str in pairs(todo) do
+    if   type(funs[str]) ~= "function" 
+    then return print("?? unknown startup action",str) 
+    else math.randomseed(settings.seed)
+         if true ~= funs[str]() then fails=fails+1; print("FAIL",str) end
+         for slot,value in pairs(saved) do settings[slot]=value end end
+  end ------
+  l.rogues()       -- Check for rogue local.
+  os.exit(fails) end -- Report failures were seen.i
+
+---- ---- ---- ---- Return
 -- That's all folks.
 return l
 

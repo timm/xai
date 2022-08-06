@@ -34,27 +34,34 @@
 -- convenntions "is" [refix is a bookeam. "n" is a number, sprefix=string
 -- _ prefix means internal function
 local _=require"lib" -- must be first line
-local the={  -- Important! First letter of each slot name must be unique.
-     about = {what      = "xai.lua",
-              why       = "Multi-objective semi-supervised explanation",
-              who       = "Tim Menzies <timm@ieee.org>",
-              when      = 2022,
-              how       = "USAGE: lua xai.lua -[bFfgmnpsS] [arg]",
-              copyright = "BSD-2 clause license"
-             },
-     Balance= 4,        -- for delta, ratio rest:best 
-     bins   = 16,       -- for bins, initial #bins  (before merging)
-     Far    = .95,      -- for far, how far to look for distant pole
-     file   = "../data/auto93.csv",
-     go     = "pass",   -- start up action
-     min    = .5,       -- for bestOrRest, cluster down to N^min groupings
-     ratios = 512,      -- for RATIO, max sample size
-     p      = 2,        -- for dist, distance coeffecient 
-     seed   = 10019,    -- random number seed
-     Some   = 512,      -- for far, how many rows to explore 
-     stop   = 6         -- for delta, min row size.
-     }
+local help=[[
+
+XAI: Multi-objective semi-supervised explanation
+(c) 2022 Tim Menzies <timm@ieee.org> BSD-2 license
+
+USAGE: lua xiago [OPTIONS]
+
+OPTIONS:
+ -B  --Balance  for delta, ration rest:best              = 4
+ -b  --bins     for bins, initial #bins (before merging) = 16
+ -F  --Far      for far, how far to look for distant pol = .95
+ -f  --file     data csv source           = ../data/auto93.csv
+ -g  --go       start-up action                          = pass
+ -h  --help     show help                                = false
+ -m  --min      for half, cluster down to n^min          = .5
+ -r  --ratios   for RATIO, max sample size               = 512
+ -p  --p        for dist, distance coefficient           = 2
+ -s  --seed     random number seed                       = 10019
+ -S  --Some     for far, how many rows to explore        = 512
+ -s  --stop     for delta, min row size                  = 6
+
+Boolean flags need no arguments e.g. "-h" sets "help" to "true".]]
+
 ---- ---- ---- ---- Names
+local the={}
+help:gsub("\n [-][%S]+[%s]+[-][-]([%S]+)%s[^\n]+= ([%S]+)",
+          function(k,x) the[k] = _.coerce(x) end)
+
 ---- Misc general functions
 local any,big,cat,chat,cli,coerce    = _.any,_.big,_.cat,_.chat,_.cli,_.coerce
 local csv,fmt,get,gt                 = _.csv,_.fmt,_.get,_.gt
@@ -67,8 +74,8 @@ local values,words                   = _.values,_.words
 local bins,half,how
 
 ---- Klasses
-local ABOUT,DATA,NOM = klass"ABOUT", klass"DATA", klass"NOM"
-local RATIO,ROW,XY   = klass"RATIO",klass"ROW",klass"XY"
+local ABOUT, DATA, NOM = klass"ABOUT", klass"DATA", klass"NOM"
+local RATIO, ROW,  XY  = klass"RATIO", klass"ROW",  klass"XY"
 
 ---- ---- ---- ---- Classes
 -- In this code,  function arguments offer some type hints. 
@@ -453,7 +460,7 @@ function how._selects(xy,rows)
   if #rowsOut < #rows then return rowsOut end end
 
 -- That's all folks
-return {the=the, csv2data=csv2data,
+return {the=the, help=help, csv2data=csv2data,
         ABOUT=ABOUT, COL=COL, DATA=DATA, NOM=NOM, 
         RATIO=RATIO, ROW=ROW, XY=XY, 
         bins=bins,  half=half,  how=how}
