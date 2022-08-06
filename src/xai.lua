@@ -279,6 +279,15 @@ function ROW:__lt(row2)
     s2 = s2 - e^(col.w * (y-x)/#ys) end
   return s2/#ys < s1/#ys end
 
+function DATA:ranked()
+  for n,row in pairs(sort(self.rows)) do row.rank= rnd(100*n/#self.rows,0); end
+  for _,row in pairs(self.rows) do row.evaled=false end
+  return shuffle(self.rows) end
+ 
+function DATA:evaled()
+  return sort(map(self.rows, function(row) 
+                          if row.evaled then chat(row.cells); return row.rank end end)) end
+
 ---- ---- ---- Dist
 -- Return 0..1 for distance between two rows using `cols`
 -- (and `cols`` defaults to the `x` columns).
@@ -312,7 +321,6 @@ function ROW:around(rows)
 local half={}
 function half.splits(rows)
   local best,rest0 = half._splits(rows)
-  print("!",cat(sort(map(rows,function(row) if row.evaled then return row.rank end end))))
   local rest = many(rest0, #best*the.Balance)
   local both = {}
   for _,row in pairs(rest) do push(both,row).label="rest" end
@@ -324,7 +332,7 @@ function half.splits(rows)
 -- final best and the first worst (so the best best and the worst
 -- worst).
 function half._splits(rows,  rowAbove,          stop,worst)
-  stop = stop or (#rows)^the.min
+  stop = stop or 6
   if   #rows < stop
   then return rows,worst or {} -- rows is shriving best
   else local A,B,As,Bs = half._split(rows,rowAbove)

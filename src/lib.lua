@@ -50,6 +50,9 @@ function l.map(t,f)
 -- Helper function for `map` (extracts certain slots
 function l.get(x) return function(t) return t[x] end end
 
+-- Last item
+function l.last(t) return t[#t] end
+
 -- Return the `p`-th item in `t` (assumed to be sorted). e.g.
 -- `per(t,.5)` returns the median.
 function l.per(t,p)
@@ -65,7 +68,7 @@ function l.rev(t)
 
 -- Randomly shuffle, in place, the list `t`.
 function l.shuffle(t,   j)
-  for i=#t,2,-1 do j=rand(i); t[i],t[j]=t[j],t[i] end; return t end
+  for i=#t,2,-1 do j=l.rand(i); t[i],t[j]=t[j],t[i] end; return t end
 
 -- Return `t` from `go` to `stop` by `inc`.     
 -- `go` is optional (defaults to 1).
