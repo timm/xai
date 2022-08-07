@@ -318,6 +318,7 @@ function NOM:dist(x,y)
     return (x=="?" or y=="?") and 1 or x==y and 0 or 1 end
 
 function RATIO:dist(x,y)
+   if x=="?" and y=="?" then return 1 end
    if     x=="?" then y=self:norm(y); x=y<.5 and 1 or 0
    elseif y=="?" then x=self:norm(x); y=x<.5 and 1 or 0
    else   x,y = self:norm(x), self:norm(y) end

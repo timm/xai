@@ -173,6 +173,15 @@ function l.words(str,sep,fun,      t)
   sep = l.fmt("([^%s]+)",sep)
   t={};for x in str:gmatch(sep) do t[1+#t]=fun(x) end;return t end
 
+---- ---- ---- ---- Help string
+function l.settings(str)
+  local t={_about={}}
+  str:gsub("\n [-][%S]+[%s]+[-][-]([%S]+)%s[^\n]+= ([%S]+)",
+           function(k,x) t[k] = l.coerce(x) end)
+  t._about.help = str
+  return t end
+
+---- ---- ---- ---- Main
 -- Update settings from command line. Run start up functions.
 -- Before running one function,   reset random number seed. Afterwards,
 -- reset settings to whatever they were before the action.
