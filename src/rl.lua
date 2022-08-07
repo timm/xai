@@ -67,19 +67,34 @@ function where(col,x,     a,b,lo,hi)
     b = (hi - lo)/the.bins
     return hi==lo and 1 or math.floor(x/b+.5)*b  end end
 
+function norm(col,num)
+  local a= has(col) -- "a" contains all our numbers,  sorted.
+  return a[#a] - a[1] < 1E-9 and 0 or (num-a[1])/(a[#a]-a[1]) end
+
 function bins(data)
   for _,col in pairs(data.about.x) do
     for _,row in pairs(data.rows) do
       local x = row.cells[col.at]
       if x~= "?" then
         row.cooked[col.at] = where(col,x) end end end end 
-    
+
+function better(data,row1,row2)
+  row1.evaled,row2.evaled= true,true
+  local s1,s2,d,n,x,y=0,0,0,0
+  local ys,e = data.about.y,math.exp(1)
+  for _,col in pairs(ys) do
+    x,y= row1.cells[col.at], row2.cells[col.at]
+    x,y= norm(col,x), norm(col,y)
+    s1 = s1 - e^(col.w * (x-y)/#ys)
+    s2 = s2 - e^(col.w * (y-x)/#ys) end
+  return s2/#ys < s1/#ys end
+
 d=DATA()
 l.csv("../data/auto93.csv",function(row) addRow(d,row) end)
 --map(d.about.x, chat)
 -- chat(d.about.x)
 bins(d)
-
+for _,row in pairs(d.rows) do l.chat(row.cooked) end
 for i=1,20 do
   r1=l.any(d.rows)
   r2=l.any(d.rows)
