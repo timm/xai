@@ -84,6 +84,7 @@ function l.last(t) return t[#t] end
 -- Return the `p`-th item in `t` (assumed to be sorted). e.g.
 -- `per(t,.5)` returns the median.
 function l.per(t,p)
+  p=p or .5
   p=math.floor((p*#t)+.5); return t[math.max(1,math.min(#t,p))] end
 
 -- Add `x` to list `t`, returning `x`.
@@ -178,7 +179,7 @@ function l.settings(str)
   local t={}
   str:gsub("\n [-][%S]+[%s]+[-][-]([%S]+)%s[^\n]+= ([%S]+)",
            function(k,x) t[k] = l.coerce(x) end)
-  t.sHelp = str
+  t._help = str
   return t end
 
 ---- ---- ---- ---- Main

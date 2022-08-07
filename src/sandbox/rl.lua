@@ -23,12 +23,13 @@ USAGE:
   lua rlgo.lua [ -bFghksS [ARG] ]
 
 OPTIONS:
- -b  --bins   discretization control = 8
- -F  --Far    in "far", how far to seek = .95
- -g  --go     start-up action        = pass
- -h  --help   show help              = false
- -k  --keep   keep only these nums   = 256
- -s  --seed   random number see      = 10019
+ -b  --bins   discretization control        = 8
+ -F  --Far    in "far", how far to seek    = .95
+ -g  --go     start-up action              = pass
+ -h  --help   show help                    = false
+ -k  --keep   keep only these nums         = 256
+ -p  --p      distance coefficient         = 2
+ -s  --seed   random number see            = 10019
  -S  --Some   in "far", how many to search = 512]]
 
 local About= {} -- factory for making columns
@@ -78,7 +79,7 @@ function About._cols(i,sNames)
 
 -- Update, only the non-skipped cols (i.e. those found in i.x and j.x.
 function About.add(i,t)
-  local row = t.cells and t or Row.new(i.about, t)
+  local row = t.cells and t or Row.new(i, t)
   for _,cols in pairs{i.x,i.y} do
     for _,col1 in pairs(cols) do 
       Col.add(col1, row.cells[col1.at]) end end 
@@ -96,7 +97,7 @@ function Row.new(about,t)
 -- Everything in rows, sorted by distance to i.
 function Row.around(i,rows)
   local fun = function(j) return {row=j, d=Row.dist(i,j)} end
-  return l.sort(l.map(rows, fun), lt"d") end
+  return l.sort(l.map(rows, fun), l.lt"d") end
 
 -- Recommend sorting i before j (since i is better).
 function Row.better(i,j)
@@ -163,7 +164,7 @@ function Col.dist(i,x,y)
 -- Diversity: divergence from central tendency (sd,entropy for NOM,RATIO).
 function Col.div(i) 
   local t = Col.has(i)
-  if i.isNom then return (l.per(t,.9) - l.per(t,.1))/2.58 else
+  if not i.isNom then return (l.per(t,.9) - l.per(t,.1))/2.58 else
     local e=0
     for _,v in pairs(t) do if v>0 then e=e-v/i.n*math.log(v/i.n,2) end end
     return e end end 
@@ -211,8 +212,8 @@ function Data.add(i,t) l.push(i.rows, About.add(i.about,t)) end
 -- Replicate structure
 function Data.clone(i,  t)
   local out = Data.new(i.about.names)
-  for _,row in pairs(t or {}) do Data.add(data,row) end
-  return data end
+  for _,row in pairs(t or {}) do Data.add(out,row) end
+  return out end
 
 -- Discretize all row values (writing those vals to "cooked").
 function Data.discretize(i)
