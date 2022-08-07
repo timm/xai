@@ -1,11 +1,3 @@
---               ___                         
---              /\_ \       
---        _ __  \//\ \    
---       /\`'__\  \ \ \  
---       \ \ \/    \_\ \_  
---        \ \_\    /\____\ 
---         \/_/    \/____/ 
---                                                         
 -- CODING CONVENTIONS:  
 --     
 -- Leading__upper_case : class   
@@ -28,7 +20,7 @@ RL.LUA : stings
 (c)2022 Tim Menzies <timm@ieee.org> BSD(2clause).
 
 USAGE: 
-  lua rlgo.lua -[bghk] [ARG]
+  lua rlgo.lua [ -bFghksS [ARG] ]
 
 OPTIONS:
  -b  --bins   discretization control = 8
@@ -39,16 +31,30 @@ OPTIONS:
  -s  --seed   random number see      = 10019
  -S  --Some   in "far", how many to search = 512]]
 
-local About= {} -- factor for making columns
-local Col  = {} -- summarize one column
+local About= {} -- factory for making columns
 local Data = {} -- store rows, and their column summaries
-local Row  = {} -- store one row
-
+local Row  = {} -- stores one row. 
+local Col  = {} -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
+-- FYI: I considered splitting Col into two (one for
+-- NOMinals and one for RATIOs).  But as shown in Col (below),
+-- one of those two cases can usually be handled as a
+-- one-liner. So the benefits of that reorg is not large.
+--  
+-- One nuance here is that Rows are created by the FIRST table and then shared
+-- with any other Data that uses that Row (e.g. if
+-- some Data is clustered into sub-Datas). This means that that (a) the total
+-- memory used is saved (since the same Row can be used by multiple tables) and
+-- (b) that Row can be used as  palce to store behavior stats across the whole
+-- inference and (c) that first 
+-- Data can be used to store information about the entire data space, and (d) a 
+-- Row can access that information (this makes certain functions easier like,
+-- say, distance).
 -- ----------------------------------------------------------------------------
 --      .__..         , 
 --      [__]|_  _ . .-+-
 --      |  |[_)(_)(_| | 
 --                      
+-- Factory for making columns.
 function About.new(sNames)
   return About._cols({names=sNames, all={}, x={}, y={}, klass=nil},sNames) end
 
@@ -118,8 +124,9 @@ function Row.dist(i,j)
 --        __    .
 --       /  ` _ |
 --       \__.(_)|
---               
+--
 -- Summarize one column.
+--    
 function Col.new(txt,at)
   txt = txt or ""
   return {n    = 0,                -- how many items seen?
@@ -130,30 +137,31 @@ function Col.new(txt,at)
           ok   = true,             -- false if some update needed
           _has  = {}} end           -- place to keep (some) column values.
 
--- Update
-function Col.add(i,x)
+-- Update. Optically, repeat n times.
+function Col.add(i,x,  n)
   if x ~= "?" then 
-    i.n = i.n + 1
-    if i.isNom then i._has[x] = 1 + (i._has[x] or 0) else 
-      local pos
-      if     #i._has  < the.keep     then pos=  1 + (#i._has) 
-      elseif l.rand() < the.keep/i.n then pos=l.rand(#i._has) end
-      if pos then
-        i.ok=false -- kept items are no longer sorted 
-        i._has[pos]=x end end end end
+    n = n or 1
+    i.n = i.n + n
+    if i.isNom then i._has[x] = n + (i._has[x] or 0) else 
+      for _ = 1,n do 
+        local pos
+        if     #i._has  < the.keep     then pos=  1 + (#i._has) 
+        elseif l.rand() < the.keep/i.n then pos=l.rand(#i._has) end
+        if pos then
+          i.ok=false -- kept items are no longer sorted 
+          i._has[pos]=x end end end end end
 
--- Distance
+-- Distance. If missing values, assume max distance.
 function Col.dist(i,x,y)
   if x=="?" and y=="?" then return 1 end
   if i.isNom then return x==y and 0 or 1 else 
-    if x=="?" and y=="?" then return 1 end
     if     x=="?" then y = Col.norm(i,y); x=y<.5 and 1 or 0
     elseif y=="?" then x = Col.norm(i,x); y=x<.5 and 1 or 0
     else   x,y = Col.norm(i,x), Col.norm(i,y) end
     return math.abs(x-y) end end
 
--- Diversity
-function Col.div(i)
+-- Diversity: divergence from central tendency (sd,entropy for NOM,RATIO).
+function Col.div(i) 
   local t = Col.has(i)
   if i.isNom then return (l.per(t,.9) - l.per(t,.1))/2.58 else
     local e=0
@@ -167,7 +175,7 @@ function Col.has(i)
     i.ok=true
     return i._has end end
 
--- Central tendency
+-- Central tendency (mode,median for NOMs,RATIOs)
 function Col.mid(i)
   if not i.isNom then return l.per(Col.has(i),.5) else
     local mode,most=nil,-1
@@ -181,7 +189,7 @@ function Col.norm(i,x)
     local lo,hi = has[1], has[#has]
     return hi - lo  < 1E-9 and 0 or (x-lo)/(hi-lo) end end
 
--- Map x to a small range of values.
+-- Map x to a small range of values. For NOMs, x maps to itself.
 function Col.discretize(i,x)
   if i.isNom then return x else 
     local has = has(i)
@@ -252,7 +260,7 @@ function Data.load(sFilename,         data)
     if data then Data.add(data,row) else data=Data.new(row) end end)
   return data end
 
--- Central tendancy
+-- Central tendency
 function Data.mid(i) return l.map(i.about.y, Col.mid) end
 
 -- Guess the sort order of the rows by peeking at a few distant points.
