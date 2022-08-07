@@ -1,11 +1,26 @@
---               ___              ___                         
---              /\_ \            /\_ \                        
---        _ __  \//\ \           \//\ \     __  __     __     
---       /\`'__\  \ \ \            \ \ \   /\ \/\ \  /'__`\   
---       \ \ \/    \_\ \_     __    \_\ \_ \ \ \_\ \/\ \L\.\_ 
---        \ \_\    /\____\   /\_\   /\____\ \ \____/\ \__/.\_\
---         \/_/    \/____/   \/_/   \/____/  \/___/  \/__/\/_/
+--               ___                         
+--              /\_ \       
+--        _ __  \//\ \    
+--       /\`'__\  \ \ \  
+--       \ \ \/    \_\ \_  
+--        \ \_\    /\____\ 
+--         \/_/    \/____/ 
 --                                                         
+-- CODING CONVENTIONS:  
+--     
+-- Leading__upper_case : class   
+-- i.                  :  instance var    
+-- l. s                : reference to a library function   
+-- prefix _            : some internal function,variable.
+--     
+-- type hints: where practical, on function arguments, 
+--    
+-- - t = table
+-- - prefix s=string
+-- - prefix n=num
+-- - prefix is=boolean
+-- - class names in lower case denote vars of that class
+-- - suffix s denotes table of things
 local l = require"lib"
 local the = l.settings[[
 
@@ -29,25 +44,11 @@ local Col  = {} -- summarize one column
 local Data = {} -- store rows, and their column summaries
 local Row  = {} -- store one row
 
--- CODE CONVENTIONS
--- Leading__upper_case : class
--- i.                  :  instance va
--- l. s                : reference to a library function
--- prefix _            : some internal function,variable.
---  
--- type hints: where practical, on function arguments, 
---   - t = table
---   - prefix s=string
---   - prefix n=num
---   - prefix is=boolean
---   - class names in lower case denote vars of that class
---   - suffix s denotes table of things
-
 -- ----------------------------------------------------------------------------
---       .__..         , 
---       [__]|_  _ . .-+-
---       |  |[_)(_)(_| | 
---                       
+--      .__..         , 
+--      [__]|_  _ . .-+-
+--      |  |[_)(_)(_| | 
+--                      
 function About.new(sNames)
   return About._cols({names=sNames, all={}, x={}, y={}, klass=nil},sNames) end
 
@@ -133,62 +134,59 @@ function Col.new(txt,at)
 function Col.add(i,x)
   if x ~= "?" then 
     i.n = i.n + 1
-    if   i.isNom 
-    then i._has[x] = 1 + (i._has[x] or 0)
-    else local pos
-         if     #i._has  < the.keep     then pos=  1 + (#i._has) 
-         elseif l.rand() < the.keep/i.n then pos=l.rand(#i._has) end
-         if pos then
-           i.ok=false -- kept items are no longer sorted 
-           i._has[pos]=x end end end end
+    if i.isNom then i._has[x] = 1 + (i._has[x] or 0) else 
+      local pos
+      if     #i._has  < the.keep     then pos=  1 + (#i._has) 
+      elseif l.rand() < the.keep/i.n then pos=l.rand(#i._has) end
+      if pos then
+        i.ok=false -- kept items are no longer sorted 
+        i._has[pos]=x end end end end
 
 -- Distance
 function Col.dist(i,x,y)
   if x=="?" and y=="?" then return 1 end
-  if   i.isNom
-  then return  x==y and 0 or 1 
-  else if x=="?" and y=="?" then return 1 end
-       if     x=="?" then y = Col.norm(i,y); x=y<.5 and 1 or 0
-       elseif y=="?" then x = Col.norm(i,x); y=x<.5 and 1 or 0
-       else   x,y = Col.norm(i,x), Col.norm(i,y) end
-       return math.abs(x-y) end end
+  if i.isNom then return x==y and 0 or 1 else 
+    if x=="?" and y=="?" then return 1 end
+    if     x=="?" then y = Col.norm(i,y); x=y<.5 and 1 or 0
+    elseif y=="?" then x = Col.norm(i,x); y=x<.5 and 1 or 0
+    else   x,y = Col.norm(i,x), Col.norm(i,y) end
+    return math.abs(x-y) end end
 
 -- Diversity
 function Col.div(i)
-  if   i.isNom 
-  then local e=0
-       for _,v in pairs(i._has) do 
-         if v>0 then e=e-v/i.n*math.log(v/i.n,2) end end
-       return e
-  else local t=Col.has(i)
-       return (l.per(t,.9) - l.per(t,.1))/2.56 end end
+  local t = Col.has(i)
+  if i.isNom then return (l.per(t,.9) - l.per(t,.1))/2.58 else
+    local e=0
+    for _,v in pairs(t) do if v>0 then e=e-v/i.n*math.log(v/i.n,2) end end
+    return e end end 
   
 -- Sorted contents
 function Col.has(i)
-  if i.isNom then return i._has end
-  if not i.ok then table.sort(i._has) end
-  i.ok=true
-  return i._has end
+  if i.isNom then return i._has else 
+    if not i.ok then table.sort(i._has) end
+    i.ok=true
+    return i._has end end
 
 -- Central tendency
 function Col.mid(i)
-  if   i.isNom 
-  then local mode,most=nil,-1
-       for k,v in pairs(i._has) do if v>most then mode,most=k,v end end
-       return mode
-  else return l.per(Col.has(i),.5) end end
+  if not i.isNom then return l.per(Col.has(i),.5) else
+    local mode,most=nil,-1
+    for k,v in pairs(i._has) do if v>most then mode,most=k,v end end
+    return mode end end 
 
 -- Return num, scaled to 0..1 for lo..hi
-function Col.norm(i,num)
-  local a= Col.has(i) -- "a" contains all our numbers,  sorted.
-  return a[#a] - a[1] < 1E-9 and 0 or (num-a[1])/(a[#a]-a[1]) end
+function Col.norm(i,x)
+  if i.isNom then return x else 
+    local has= Col.has(i) -- "a" contains all our numbers,  sorted.
+    local lo,hi = has[1], has[#has]
+    return hi - lo  < 1E-9 and 0 or (x-lo)/(hi-lo) end end
 
 -- Map x to a small range of values.
-function Col.discretize(i,x,     a,b,lo,hi)
-  if i.isNom then return x else
-    a = has(i)
-    lo,hi = a[1], a[#a]
-    b = (hi - lo)/the.bins
+function Col.discretize(i,x)
+  if i.isNom then return x else 
+    local has = has(i)
+    local lo,hi = has[1], has[#has]
+    local b = (hi - lo)/the.bins
     return hi==lo and 1 or math.floor(x/b+.5)*b  end end
 
 -- ----------------------------------------------------------------------------
@@ -210,11 +208,11 @@ function Data.clone(i,  t)
 
 -- Discretize all row values (writing those vals to "cooked").
 function Data.discretize(i)
-  for _,col in pairs(i.about.x) do
-    for _,row in pairs(i.rows) do
+  for _,row in pairs(i.rows) do
+    for _,col in pairs(i.about.x) do
       local x = row.cells[col.at]
       if x~= "?" then
-        row.cooked[col.at] = discretize(col,x) end end end end 
+        row.cooked[col.at] = Col.discretize(col,x) end end end end 
 
 -- Recursively bi-cluster one Data into sub-Datas.
 function Data.cluster(i,  rowAbove,stop)
@@ -227,10 +225,12 @@ function Data.cluster(i,  rowAbove,stop)
   return i end
 
 -- Split data according to distance to two  distant points A,B
--- To speed things up, find distant points via A=far(any()) and B=far(A).
--- To speed things up, try to reuse a distant point from above (see rowAbove).
--- To speed things up, only look at some of the rows (see the.Some).
 -- To dodge outliers, don't search all the way to edge (see the.Far).
+-- To speed things up:   
+-- - try to reuse a distant point from above (see rowAbove).
+-- - only look at some of the rows (see the.Some).
+-- - find distant points in linear time via    
+--   A=far(any()) and B=far(A).
 function Data.half(i, rows,  rowAbove)
   local some= l.many(rows, the.Some)
   local function far(row) 

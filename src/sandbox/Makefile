@@ -1,5 +1,8 @@
 R=$(shell git rev-parse --show-toplevel)
 
+~/tmp/%.html : %.lua
+	@docco -l classic -o ~/tmp $<
+
 ../../docs/%.pdf : %.lua  ## make pdf
 	@mkdir -p $R/docs
 	@echo "pdf-ing $@ ... "
