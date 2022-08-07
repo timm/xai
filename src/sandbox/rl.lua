@@ -36,6 +36,7 @@ local About= {} -- factory for making columns
 local Data = {} -- store rows, and their column summaries
 local Row  = {} -- stores one row. 
 local Col  = {} -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
+
 -- FYI: I considered splitting Col into two (one for
 -- NOMinals and one for RATIOs).  But as shown in Col (below),
 -- one of those two cases can usually be handled as a
