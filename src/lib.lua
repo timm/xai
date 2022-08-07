@@ -175,10 +175,10 @@ function l.words(str,sep,fun,      t)
 
 ---- ---- ---- ---- Help string
 function l.settings(str)
-  local t={_about={}}
+  local t={}
   str:gsub("\n [-][%S]+[%s]+[-][-]([%S]+)%s[^\n]+= ([%S]+)",
            function(k,x) t[k] = l.coerce(x) end)
-  t._about.help = str
+  t.sHelp = str
   return t end
 
 ---- ---- ---- ---- Main

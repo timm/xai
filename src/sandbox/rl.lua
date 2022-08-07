@@ -1,19 +1,28 @@
---         ___           ___                         
---        /\_ \         /\_ \                        
---  _ __  \//\ \        \//\ \     __  __     __     
--- /\`'__\  \ \ \         \ \ \   /\ \/\ \  /'__`\   
--- \ \ \/    \_\ \_  __    \_\ \_ \ \ \_\ \/\ \L\.\_ 
---  \ \_\    /\____\/\_\   /\____\ \ \____/\ \__/.\_\
---   \/_/    \/____/\/_/   \/____/  \/___/  \/__/\/_/
+--         ___              ___                         
+--        /\_ \            /\_ \                        
+--  _ __  \//\ \           \//\ \     __  __     __     
+-- /\`'__\  \ \ \            \ \ \   /\ \/\ \  /'__`\   
+-- \ \ \/    \_\ \_     __    \_\ \_ \ \ \_\ \/\ \L\.\_ 
+--  \ \_\    /\____\   /\_\   /\____\ \ \____/\ \__/.\_\
+--   \/_/    \/____/   \/_/   \/____/  \/___/  \/__/\/_/
 --                                                   
 local l = require"lib"
 local the = l.settings[[
-rl.lua : stings
-(c)2022 Tim Menzies <timm@ieee.org> BSD-2clause.
+
+RL.LUA : stings
+(c)2022 Tim Menzies <timm@ieee.org> BSD(2clause).
+
+USAGE: 
+  lua rlgo.lua -[bghk] [ARG]
 
 OPTIONS:
- -b --bins discretization control = 8
- -k --keep keep only these nums   = 256]]
+ -b  --bins   discretization control = 8
+ -F  --Far    in "far", how far to seek = .95
+ -g  --go     start-up action        = pass
+ -h  --help   show help              = false
+ -k  --keep   keep only these nums   = 256
+ -s  --seed   random number see      = 10019
+ -S  --Some   in "far", how many to search = 512]]
 
 local About= {} -- factor for making columns
 local Col  = {} -- summarize one column
@@ -193,14 +202,11 @@ function Data.new(t) return {rows={}, about=About.new(t) } end
 -- Update
 function Data.add(i,t) l.push(i.rows, About.add(i.about,t)) end
 
--- Load from file
-function Data.load(sFilename,         data)
-  l.csv(sFilename, function(row) 
-    if data then Data.add(data,row) else data=Data.new(row) end end)
+-- Replicate structure
+function Data.clone(i,  t)
+  local out = Data.new(i.about.names)
+  for _,row in pairs(t or {}) do Data.add(data,row) end
   return data end
-
--- Central tendancy
-function Data.mid(i) return l.map(i.about.y, Col.mid) end
 
 -- Discretize all row values (writing those vals to "cooked").
 function Data.discretize(i)
@@ -210,20 +216,59 @@ function Data.discretize(i)
       if x~= "?" then
         row.cooked[col.at] = discretize(col,x) end end end end 
 
--------------------------------------------------------------------------------
--- .  .       
--- |\/| _.*._ 
--- |  |(_]|[ )
---            
-d=Data.load("../data/auto93.csv")
+-- Recursively bi-cluster one Data into sub-Datas.
+function Data.cluster(i,  rowAbove,stop)
+  stop = stop or (#i.rows)^the.Min
+  if #i.rows >= 2*stop then 
+    local A,B,As,Bs,c = Data.half(i.rows,rowAbove)
+    i.halves = {c=c, A=A, B=B,
+                kids = { Data.cluster(Data.clone(i,As), A, stop),
+                         Data.cluster(Data.clone(i,Bs), B, stop) }}end
+  return i end
 
-l.chat(Data.mid(d))
-l.chat(d.about.x[1])
---map(d.About.x, chat)
--- chat(d.About.x)
--- bins(d)
--- for _,row in pairs(d.rows) do l.chat(Row.cooked) end
--- for i=1,20 do
---   r1=l.any(d.rows)
---   r2=l.any(d.rows)
--- end
+-- Split data according to distance to two  distant points A,B
+-- To speed things up, find distant points via A=far(any()) and B=far(A).
+-- To speed things up, try to reuse a distant point from above (see rowAbove).
+-- To speed things up, only look at some of the rows (see the.Some).
+-- To dodge outliers, don't search all the way to edge (see the.Far).
+function Data.half(i, rows,  rowAbove)
+  local some= l.many(rows, the.Some)
+  local function far(row) 
+    return l.per(Row.around(row,some), the.Far).row end
+  local function project(row) 
+    local a,b = Row.dist(row,A), Row.dist(row,B)
+    return {row=row, x=(a^2 + c^2 - b^2)/(2*c)} end
+  local A= rowAbove or far(l.any(some))
+  local B= far(A)
+  local c= Row.dist(A,B)
+  local As,Bs = {},{}
+  for n,rowx in pairs(l.sort(l.map(rows, project),l.lt"x")) do
+    push(n < #rows/2 and As or Bs, rowx.row) end
+  return A,B,As,Bs,c end
+
+-- Load from file
+function Data.load(sFilename,         data)
+  l.csv(sFilename, function(row) 
+    if data then Data.add(data,row) else data=Data.new(row) end end)
+  return data end
+
+-- Central tendancy
+function Data.mid(i) return l.map(i.about.y, Col.mid) end
+
+-- Guess the sort order of the rows by peeking at a few distant points.
+function Data.optimize(i,  rowAbove,stop,out)
+  stop = stop or (#i.rows)^the.Min
+  out = out or {}
+  if   #i.rows < 2*stop 
+  then for _,row in pairs(i.rows) do push(out,row) end
+  else local A,B,As,Bs,c = Data.half(i.rows, rowAbove)
+       if Row.better(A,B) 
+       then for j=#Bs,1 do push(out,Bs[j]) end
+            Data.optimize(Data.clone(i,rev(As)), A, stop, out)
+       else for _,row in pairs(As) do push(out,row) end
+            Data.optimize(Data.clone(i,Bs), B, stop, out)
+       end end 
+  return out end 
+
+-------------------------------------------------------------------------------
+return {Data=Data,Row=Row,Col=Col,About=About,the=the}
