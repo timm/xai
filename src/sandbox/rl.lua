@@ -31,26 +31,25 @@ OPTIONS:
  -p  --p      distance coefficient         = 2
  -s  --seed   random number see            = 10019
  -S  --Some   in "far", how many to search = 512]]
-
-local About= {} -- factory for making columns
-local Data = {} -- store rows, and their column summaries
-local Row  = {} -- stores one row. 
-local Col  = {} -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
+local RL   = {About={}, Data={}, Row={},Col={},the=the}
+local About= RL.About -- factory for making columns
+local Data = RL.Data -- store rows, and their column summaries
+local Row  = RL.Row -- stores one row. 
+local Col  = RL.Col -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
 
 -- FYI: I considered splitting Col into two (one for
 -- NOMinals and one for RATIOs).  But as shown in Col (below),
 -- one of those two cases can usually be handled as a
 -- one-liner. So the benefits of that reorg is not large.
 --  
--- One nuance here is that Rows are created by the FIRST table and then shared
--- with any other Data that uses that Row (e.g. if
--- some Data is clustered into sub-Datas). This means that that (a) the total
--- memory used is saved (since the same Row can be used by multiple tables) and
--- (b) that Row can be used as  palce to store behavior stats across the whole
--- inference and (c) that first 
--- Data can be used to store information about the entire data space, and (d) a 
--- Row can access that information (this makes certain functions easier like,
--- say, distance).
+-- One nuance here is that, to save memory, Rows are created by the FIRST Data
+-- that sees a record, then shared across every other clone  of the data
+-- (e.g. when clustering, the super Data points to the same Row as the sub-Data
+-- cluster of all the other rows closest to that first Row).
+-- Since  rows maintains a pointer to its creator Data object,
+-- that first data Data can be used to store information about the entire 
+-- data spaces (e.g. the max and min possible values for each columns).
+-- This makes certain functions easier like, say, distance).
 -- ----------------------------------------------------------------------------
 --      .__..         , 
 --      [__]|_  _ . .-+-
@@ -281,4 +280,4 @@ function Data.optimize(i,  rowAbove,stop,out)
   return out end 
 
 -- ----------------------------------------------------------------------------
-return {Data=Data,Row=Row,Col=Col,About=About,the=the}
+return RL
