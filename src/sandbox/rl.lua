@@ -1,11 +1,11 @@
---         ___              ___                         
---        /\_ \            /\_ \                        
---  _ __  \//\ \           \//\ \     __  __     __     
--- /\`'__\  \ \ \            \ \ \   /\ \/\ \  /'__`\   
--- \ \ \/    \_\ \_     __    \_\ \_ \ \ \_\ \/\ \L\.\_ 
---  \ \_\    /\____\   /\_\   /\____\ \ \____/\ \__/.\_\
---   \/_/    \/____/   \/_/   \/____/  \/___/  \/__/\/_/
---                                                   
+--               ___              ___                         
+--              /\_ \            /\_ \                        
+--        _ __  \//\ \           \//\ \     __  __     __     
+--       /\`'__\  \ \ \            \ \ \   /\ \/\ \  /'__`\   
+--       \ \ \/    \_\ \_     __    \_\ \_ \ \ \_\ \/\ \L\.\_ 
+--        \ \_\    /\____\   /\_\   /\____\ \ \____/\ \__/.\_\
+--         \/_/    \/____/   \/_/   \/____/  \/___/  \/__/\/_/
+--                                                         
 local l = require"lib"
 local the = l.settings[[
 
@@ -43,11 +43,11 @@ local Row  = {} -- store one row
 --   - class names in lower case denote vars of that class
 --   - suffix s denotes table of things
 
--------------------------------------------------------------------------------
--- .__..         , 
--- [__]|_  _ . .-+-
--- |  |[_)(_)(_| | 
---                 
+-- ----------------------------------------------------------------------------
+--       .__..         , 
+--       [__]|_  _ . .-+-
+--       |  |[_)(_)(_| | 
+--                       
 function About.new(sNames)
   return About._cols({names=sNames, all={}, x={}, y={}, klass=nil},sNames) end
 
@@ -78,10 +78,46 @@ function About.add(i,t)
   return row  end
 
 -------------------------------------------------------------------------------
---  __    .
--- /  ` _ |
--- \__.(_)|
---         
+--       .__          
+--       [__) _ .    ,
+--       |  \(_) \/\/ 
+--                    
+-- Hold one record
+function Row.new(about,t) 
+  return {_about=about, cells=t, cooked=l.map(t,l.same)} end
+
+-- Everything in rows, sorted by distance to i.
+function Row.around(i,rows)
+  local fun = function(j) return {row=j, d=Row.dist(i,j)} end
+  return l.sort(l.map(rows, fun), lt"d") end
+
+-- Recommend sorting i before j (since i is better).
+function Row.better(i,j)
+  i.evaled,j.evaled= true,true
+  local s1,s2,d,n,x,y=0,0,0,0
+  local ys,e = i._about.y,math.exp(1)
+  for _,col in pairs(ys) do
+    x,y= i.cells[col.at], j.cells[col.at]
+    x,y= Col.norm(col,x), Col.norm(col,y)
+    s1 = s1 - e^(Col.w * (x-y)/#ys)
+    s2 = s2 - e^(Col.w * (y-x)/#ys) end
+  return s1/#ys < s2/#ys end
+
+-- Distance
+function Row.dist(i,j)
+  local d,n,x,y,dist1=0,0
+  local cols = cols or i._about.x
+  for _,col in pairs(cols) do
+    x,y = i.cells[col.at], j.cells[col.at]
+    d   = d + Col.dist(col,x,y)^the.p
+    n   = n + 1 end
+  return (d/n)^(1/the.p) end
+
+-- ----------------------------------------------------------------------------
+--        __    .
+--       /  ` _ |
+--       \__.(_)|
+--               
 -- Summarize one column.
 function Col.new(txt,at)
   txt = txt or ""
@@ -155,47 +191,11 @@ function Col.discretize(i,x,     a,b,lo,hi)
     b = (hi - lo)/the.bins
     return hi==lo and 1 or math.floor(x/b+.5)*b  end end
 
--------------------------------------------------------------------------------
--- .__          
--- [__) _ .    ,
--- |  \(_) \/\/ 
---              
--- Hold one record
-function Row.new(about,t) 
-  return {_about=about, cells=t, cooked=l.map(t,l.same)} end
-
--- Everything in rows, sorted by distance to i.
-function Row.around(i,rows)
-  local fun = function(j) return {row=j, d=Row.dist(i,j)} end
-  return l.sort(l.map(rows, fun), lt"d") end
-
--- Recommend sorting i before j (since i is better).
-function Row.better(i,j)
-  i.evaled,j.evaled= true,true
-  local s1,s2,d,n,x,y=0,0,0,0
-  local ys,e = i._about.y,math.exp(1)
-  for _,col in pairs(ys) do
-    x,y= i.cells[col.at], j.cells[col.at]
-    x,y= Col.norm(col,x), Col.norm(col,y)
-    s1 = s1 - e^(Col.w * (x-y)/#ys)
-    s2 = s2 - e^(Col.w * (y-x)/#ys) end
-  return s1/#ys < s2/#ys end
-
--- Distance
-function Row.dist(i,j)
-  local d,n,x,y,dist1=0,0
-  local cols = cols or i._about.x
-  for _,col in pairs(cols) do
-    x,y = i.cells[col.at], j.cells[col.at]
-    d   = d + Col.dist(col,x,y)^the.p
-    n   = n + 1 end
-  return (d/n)^(1/the.p) end
-
--------------------------------------------------------------------------------
--- .__     ,    
--- |  \ _.-+- _.
--- |__/(_] | (_]
---              
+-- ----------------------------------------------------------------------------
+--       .__     ,    
+--       |  \ _.-+- _.
+--       |__/(_] | (_]
+--                    
 -- Holds n records
 function Data.new(t) return {rows={}, about=About.new(t) } end
 
@@ -270,5 +270,5 @@ function Data.optimize(i,  rowAbove,stop,out)
        end end 
   return out end 
 
--------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 return {Data=Data,Row=Row,Col=Col,About=About,the=the}
