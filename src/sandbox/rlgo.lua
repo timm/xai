@@ -18,12 +18,12 @@ function go.the() l.chat(the); return true end
 function go.per() return 6==(l.per{1,2,3,4,5,6,7,8,9,10,11}) end
 
 function go.nom(   nom)
-  nom=Col.new("n")
+  nom=Col.nom()
   for _,x in pairs{"a","a","a","a","b","b","c"} do Col.add(nom,x) end 
   return "a"==Col.mid(nom) and 1.38==l.rnd(Col.div(nom),2) end
 
 function go.ratio(    r)
-  r=Col.new()
+  r=Col.ratio()
   the.keep = 64
   for i=1,100 do Col.add(r,i) end
   return 52==Col.mid(r) and 32.56==l.rnd(Col.div(r),2)  end

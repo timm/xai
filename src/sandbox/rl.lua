@@ -1,12 +1,16 @@
 -- CODING CONVENTIONS:  
---     
+-- No globals. Line length: 80 chars or less. 
+-- Parse settings from a help string (see top of file).  
+-- This code does no run anything. Rather it is a module to be loaded 
+-- and run by e.g. rlgo.lua)
+--
+-- VARIABLE NAME CONVENTIONS:   
 -- Leading__upper_case : class   
 -- i.                  :  instance var    
 -- l. s                : reference to a library function   
 -- prefix _            : some internal function,variable.
 --     
--- type hints: where practical, on function arguments, 
---    
+-- TYPE HINT CONVENTIONS (where practical, on function arguments): 
 -- - t = table
 -- - prefix s=string
 -- - prefix n=num
@@ -124,7 +128,6 @@ function Row.dist(i,j)
 --      |___ |__| |___ 
 --                     
 -- Summarize one column.
---    
 function Col.new(txt,at)
   txt = txt or ""
   return {n    = 0,                -- how many items seen?
@@ -134,6 +137,10 @@ function Col.new(txt,at)
           w    = txt:find(_is.less) and -1 or 1,
           ok   = true,             -- false if some update needed
           _has  = {}} end           -- place to keep (some) column values.
+
+-- Create columns with particular roles.
+function Col.ratio(...) local i=Col.new(...); i.isNom=false; return i end
+function Col.nom(...)   local i=Col.new(...); i.isNom=true;  return i end
 
 -- Update. Optically, repeat n times.
 function Col.add(i,x,  n)

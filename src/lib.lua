@@ -142,9 +142,11 @@ l.fmt = string.format
 ---- ---- ---- Read
 -- Try reading `str` as a boolean, then int, then float, then string.
 function l.coerce(str)
-  str = str:match"^%s*(.-)%s*$"
-  if str=="true" then return true elseif str=="false" then return false
-  else return math.tointeger(str) or tonumber(str) or str end  end
+  local function coerce1(str)
+    if str=="true"  then return true end 
+    if str=="false" then return false end
+    return str end
+  return tonumber(str) or coerce1(str:match"^%s*(.-)%s*$") end
 
 -- Read update for `slot` of table from command line flag `-s` or `--slot`.
 -- If slot's is a boolean, this code flips old value.
