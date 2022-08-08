@@ -30,7 +30,8 @@ OPTIONS:
  -k  --keep   keep only these nums         = 256
  -p  --p      distance coefficient         = 2
  -s  --seed   random number see            = 10019
- -S  --Some   in "far", how many to search = 512]]
+ -S  --Some   in "far", how many to search = 512
+]]
 local RL   = {About={}, Data={}, Row={},Col={},the=the}
 local About= RL.About -- factory for making columns
 local Data = RL.Data -- store rows, and their column summaries
@@ -50,11 +51,11 @@ local Col  = RL.Col -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,
 -- that first data Data can be used to store information about the entire 
 -- data spaces (e.g. the max and min possible values for each columns).
 -- This makes certain functions easier like, say, distance).
--- ----------------------------------------------------------------------------
---      .__..         , 
---      [__]|_  _ . .-+-
---      |  |[_)(_)(_| | 
---                      
+
+--      ____ ___  ____ _  _ ___ 
+--      |__| |__] |  | |  |  |  
+--      |  | |__] |__| |__|  |  
+--                              
 -- Factory for making columns.
 function About.new(sNames)
   return About._cols({names=sNames, all={}, x={}, y={}, klass=nil},sNames) end
@@ -83,13 +84,11 @@ function About.add(i,t)
   for _,cols in pairs{i.x,i.y} do
     for _,col1 in pairs(cols) do 
       Col.add(col1, row.cells[col1.at]) end end 
-  return row  end
-
--------------------------------------------------------------------------------
---       .__          
---       [__) _ .    ,
---       |  \(_) \/\/ 
---                    
+  return row end
+--      ____ ____ _ _ _ 
+--      |__/ |  | | | | 
+--      |  \ |__| |_|_| 
+--                      
 -- Hold one record
 function Row.new(about,t) 
   return {_about=about, cells=t, cooked=l.map(t,l.same)} end
@@ -119,13 +118,11 @@ function Row.dist(i,j)
     x,y = i.cells[col.at], j.cells[col.at]
     d   = d + Col.dist(col,x,y)^the.p
     n   = n + 1 end
-  return (d/n)^(1/the.p) end
-
--- ----------------------------------------------------------------------------
---        __    .
---       /  ` _ |
---       \__.(_)|
---
+  return (d/n)^(1/the.p) end
+--      ____ ____ _    
+--      |    |  | |    
+--      |___ |__| |___ 
+--                     
 -- Summarize one column.
 --    
 function Col.new(txt,at)
@@ -196,13 +193,11 @@ function Col.discretize(i,x)
     local has = has(i)
     local lo,hi = has[1], has[#has]
     local b = (hi - lo)/the.bins
-    return hi==lo and 1 or math.floor(x/b+.5)*b  end end
-
--- ----------------------------------------------------------------------------
---       .__     ,    
---       |  \ _.-+- _.
---       |__/(_] | (_]
---                    
+    return hi==lo and 1 or math.floor(x/b+.5)*b  end end
+--      ___  ____ ___ ____ 
+--      |  \ |__|  |  |__| 
+--      |__/ |  |  |  |  | 
+--                         
 -- Holds n records
 function Data.new(t) return {rows={}, about=About.new(t) } end
 
@@ -223,6 +218,9 @@ function Data.discretize(i)
       if x~= "?" then
         row.cooked[col.at] = Col.discretize(col,x) end end end end 
 
+-- Diversity
+function Data.div(i) return l.map(i.about.y, Col.div) end
+
 -- Recursively bi-cluster one Data into sub-Datas.
 function Data.cluster(i,  rowAbove,stop)
   stop = stop or (#i.rows)^the.Min
@@ -240,19 +238,19 @@ function Data.cluster(i,  rowAbove,stop)
 -- - only look at some of the rows (see the.Some).
 -- - find distant points in linear time via    
 --   A=far(any()) and B=far(A).
-function Data.half(i, rows,  rowAbove)
+function Data.half(i, rows,  rowAbove,      c)
   local some= l.many(rows, the.Some)
   local function far(row) 
     return l.per(Row.around(row,some), the.Far).row end
-  local function project(row) 
-    local a,b = Row.dist(row,A), Row.dist(row,B)
-    return {row=row, x=(a^2 + c^2 - b^2)/(2*c)} end
+  local As,Bs = {},{}
   local A= rowAbove or far(l.any(some))
   local B= far(A)
   local c= Row.dist(A,B)
-  local As,Bs = {},{}
+  local function project(row) 
+    local a,b = Row.dist(row,A), Row.dist(row,B)
+    return {row=row, x=(a^2 + c^2 - b^2)/(2*c)} end
   for n,rowx in pairs(l.sort(l.map(rows, project),l.lt"x")) do
-    push(n < #rows/2 and As or Bs, rowx.row) end
+    l.push(n < #rows/2 and As or Bs, rowx.row) end
   return A,B,As,Bs,c end
 
 -- Load from file

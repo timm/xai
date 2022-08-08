@@ -37,8 +37,10 @@ function go.about()
 function go.data(     data1,data2)
   data1=Data.load("../../data/auto93.csv")
   print("mid1", l.cat(Data.mid(data1,2)))
+  print("div1", l.cat(l.rnds(Data.div(data1,2))))
   data2=  Data.clone(data1, data1.rows)
   print("mid2", l.cat(Data.mid(data2,2)))
+  print("div2", l.cat(l.rnds(Data.div(data2,2))))
   return true
   end
 
@@ -53,4 +55,10 @@ function go.dist(    data1,row1,row2)
     if j< 5 or j>393 then l.chat(rowd.row.cells) end end 
   return true end
 
+function go.half(    data1,row1,row2)
+  data1=Data.load("../../data/auto93.csv")
+  local A,B,As,Bs,c = Data.half(data1, data1.rows) 
+  print(c, #As, #Bs, l.cat(A.cells), l.cat(B.cells))
+  return true end
+  
 l.main(the._help, the,go)

@@ -38,7 +38,7 @@ function l.rnd(num, places)
   return math.floor(num * mult + 0.5) / mult end
 
 function l.rnds(t, places)
-  return map(t,function(x) return rnd(x,places) end) end
+  return l.map(t,function(x) return l.rnd(x,places) end) end
 
 -- print a horizontal quartile chart (assumes `t` is sorted)
 function l.tiles(t, args)
