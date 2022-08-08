@@ -31,7 +31,7 @@ OPTIONS:
  -F  --Far    in "far", how far to seek    = .95
  -g  --go     start-up action              = pass
  -h  --help   show help                    = false
- -k  --keep   keep only these nums         = 256
+ -k  --keep   keep only these nums         = 512
  -m  --Min    stop at N^m                  = .5
  -p  --p      distance coefficient         = 2
  -s  --seed   random number see            = 10019
@@ -112,91 +112,12 @@ function Row.better(i,j)
     x,y= i.cells[col.at], j.cells[col.at]
     x,y= Col.norm(col,x), Col.norm(col,y)
     s1 = s1 - e^(col.w * (x-y)/#ys)
-    s2 = s2 - e^(col.w * (y-x)/#ys) end
+    s2 = s2 - e^(col.w * (y-x)/#ys) 
+  end
   return s1/#ys < s2/#ys end
 
 -- Distance
 function Row.dist(i,j)
-package.path = '../?.lua;' .. package.path 
-local l = require"lib"
-local r = require"rl"
-local go={}
-local About= r.About
-local Data = r.Data
-local Row  = r.Row
-local Col  = r.Col
-local the  = r.the
-
-function go.pass()  return true end
-
--- local d=r.Data.load("../data/auto93.csv")
--- l.chat(r.Data.mid(d))
--- l.chat(d.about.x[1])
---
-function go.the() l.chat(the); return true end
-function go.per() return 6==(l.per{1,2,3,4,5,6,7,8,9,10,11}) end
-
-function go.nom(   nom)
-  nom=Col.nom()
-  for _,x in pairs{"a","a","a","a","b","b","c"} do Col.add(nom,x) end 
-  return "a"==Col.mid(nom) and 1.38==l.rnd(Col.div(nom),2) end
-
-function go.ratio(    r)
-  r=Col.ratio()
-  the.keep = 64
-  for i=1,100 do Col.add(r,i) end
-  return 52==Col.mid(r) and 32.56==l.rnd(Col.div(r),2)  end
-
-function go.about()
-  local t= {"Clndrs","Volume","Hp:","Lbs-","Acc+","Model","origin","Mpg+"}
-  l.map( About.new(t).y , l.chat)
-  l.map( About.new(t).x , l.chat)
-  return true end
-
-function go.data(     data1,data2)
-  data1=Data.load("../../data/auto93.csv")
-  print("mid1", l.cat(Data.mid(data1,2)))
-  print("div1", l.cat(l.rnds(Data.div(data1,2))))
-  data2=  Data.clone(data1, data1.rows)
-  print("mid2", l.cat(Data.mid(data2,2)))
-  print("div2", l.cat(l.rnds(Data.div(data2,2))))
-  return true
-  end
-
-function go.dist(    data1,row1,row2)
-  data1=Data.load("../../data/auto93.csv")
-  print(#data1.rows)
-  for i = 1,20 do
-    row1=l.any(data1.rows)
-    row2=l.any(data1.rows)
-    print(Row.dist(row1,row2)) end
-  for j,rowd in pairs(Row.around(l.any(data1.rows), data1.rows)) do
-    if j< 5 or j>393 then l.chat(rowd.row.cells) end end 
-  return true end
-
-function go.half(    data1,row1,row2)
-  data1=Data.load("../../data/auto93.csv")
-  local A,B,As,Bs,c = Data.half(data1, data1.rows) 
-  print(c, #As, #Bs, l.cat(A.cells), l.cat(B.cells))
-  data2=Data.clone(data1,As)
-  data3=Data.clone(data1,Bs)
-  print("As", l.cat(Data.mid(data2,2)))
-  print("Bs", l.cat(Data.mid(data3,2)))
-  return true end
-
-function go.optimize(    data1,row1,row2)
-  data1=Data.load("../../data/auto93.csv")
-  local rows={}
-  Data.optimize(data1,rows)
-  print("rows:",#rows)
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,1,50)),2)))
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,100,150)),2)))
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,200,250)),2)))
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,300,350)),2)))
-  print("Bs", l.cat(Data.mid(Data.clone(data1,l.slice(rows,351)),2)))
-  return true end
-  
-l.main(the._help, the,go)
   local d,n,x,y,dist1=0,0
   local cols = cols or i._about.x
   for _,col in pairs(cols) do
@@ -294,9 +215,10 @@ function Data.add(i,t) l.push(i.rows, About.add(i.about,t)) end
 
 -- Sort rows, then pretend you didn't
 function Data.cheat(i)
-  for j,row in pairs(sort(i.rows, Row.better)) do
+  for j,row in pairs(l.sort(i.rows, Row.better)) do
     row.rank = l.rnd(100*j/#i.rows)
-    row.evaled= false end end
+    row.evaled= false end 
+  i.rows = l.shuffle(i.rows) end
 
 -- Replicate structure
 function Data.clone(i,  t)
@@ -354,21 +276,33 @@ function Data.load(sFilename,         data)
   return data end
 
 -- Central tendency
-function Data.mid(i) return l.map(i.about.y, Col.mid) end
+function Data.mid(i) 
+  local t={}
+  for _,col in pairs(i.about.y) do t.n=#i.rows; t[col.txt] = Col.mid(col) end 
+  return t end
 
--- Heuristically sort rows by general trends in the data
+function Data.best(i,  rowAbove,stop)
+  stop = stop or 10 --(#i.rows)^the.Min
+  if   #i.rows <= stop 
+  then return i.rows
+  else local A,B,As,Bs,c = Data.half(i, i.rows, rowAbove)
+       if   Row.better(A,B) 
+       then return Data.best(Data.clone(i,As),A,stop)
+       else return Data.best(Data.clone(i,l.rev(Bs)),B,stop) end end end 
+
+-- Heuristically sort rows by trends in the y-values
 -- (specifically, evaluated two remote points, sort worse
 -- half by distance to best point, recurse on best half).
 function Data.trends(i,out,  rowAbove,stop)
   stop = stop or (#i.rows)^the.Min
   out = out or {}
-  if   #i.rows < 2*stop 
-  then for _,row in pairs(i.rows) do io.write(0); l.push(out,row) end
+  if   #i.rows < stop 
+  then for _,row in pairs(l.rev(i.rows)) do l.push(out,row) end
   else local A,B,As,Bs,c = Data.half(i, i.rows, rowAbove)
-       if Row.better(A,B) 
-       then for j=#Bs,1,-1 do io.write(">"); l.push(out,Bs[j]) end
+       if   Row.better(A,B) 
+       then for j=#Bs,1,-1 do l.push(out,Bs[j]) end
             Data.trends(Data.clone(i,l.rev(As)), out,A, stop)
-       else for _,row in pairs(As) do io.write("<"); l.push(out,row) end
+       else for _,row in pairs(As) do l.push(out,row) end
             Data.trends(Data.clone(i,Bs), out,B, stop) end end 
   return out end
 

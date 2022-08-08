@@ -1,13 +1,13 @@
 package.path = '../?.lua;' .. package.path 
 local l = require"lib"
 local r = require"rl"
-local go={}
 local About= r.About
 local Data = r.Data
 local Row  = r.Row
 local Col  = r.Col
 local the  = r.the
 
+local go={}
 function go.pass()  return true end
 
 -- local d=r.Data.load("../data/auto93.csv")
@@ -44,38 +44,58 @@ function go.data(     data1,data2)
   return true
   end
 
-function go.dist(    data1,row1,row2)
-  data1=Data.load("../../data/auto93.csv")
+function go.dist()
+  local data1=Data.load("../../data/auto93.csv")
   print(#data1.rows)
   for j = 1,20 do
-    row1=l.any(data1.rows)
-    row2=l.any(data1.rows)
+    local row1=l.any(data1.rows)
+    local row2=l.any(data1.rows)
     print(Row.dist(row1,row2)) end
-  -- for j,rowd in pairs(Row.around(l.any(data1.rows), data1.rows)) do
-  --   if j< 5 or j>393 then l.chat(rowd.row.cells) end end 
+  for j,rowd in pairs(Row.around(l.any(data1.rows), data1.rows)) do
+    if j< 5 or j>393 then l.chat(rowd.row.cells) end end 
   return true 
   end
 
-function go.half(    data1,row1,row2)
-  data1=Data.load("../../data/auto93.csv")
+function go.half()
+  local data1=Data.load("../../data/auto93.csv")
   local A,B,As,Bs,c = Data.half(data1, data1.rows) 
   print(c, #As, #Bs, l.cat(A.cells), l.cat(B.cells))
-  data2=Data.clone(data1,As)
-  data3=Data.clone(data1,Bs)
+  local data2=Data.clone(data1,As)
+  local data3=Data.clone(data1,Bs)
   print("As", l.cat(Data.mid(data2,2)))
   print("Bs", l.cat(Data.mid(data3,2)))
   return true end
 
--- function go.trends(    data1,rows)
---   data1=Data.load("../../data/auto93.csv")
---   local rows
---   rows= Data.trends(data1,{})
---   print("rows:",#rows)
---   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,1,50)),2)))
---   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,100,150)),2)))
---   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,200,250)),2)))
---   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,300,350)),2)))
---   print("Bs", l.cat(Data.mid(Data.clone(data1,l.slice(rows,351)),2))) 
---   return true end
---   
+function go.trends()
+  local data1=Data.load("../../data/auto93.csv")
+  Data.cheat(data1)
+  local rows= Data.trends(data1)
+  print("rows:",#rows)
+  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,1,50)),2)))
+  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,100,150)),2)))
+  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,200,250)),2)))
+  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,300,350)),2)))
+  print("Bs", l.cat(Data.mid(Data.clone(data1,l.slice(rows,351)),2))) 
+  print(#l.map(data1.rows,l.grab"evaled"))
+  for j,row in pairs(rows) do print(j,row.rank) end
+  return true end
+
+function go.quota()
+  local evals = {} 
+  local guess = {}
+  local tops  = {}
+  for r=1,20 do
+    local data1=Data.load("../../data/auto93.csv")
+    Data.cheat(data1)
+    local best = Data.best(data1)
+    local evaled = l.sort(l.map(data1.rows, l.grab"evaled"),l.lt"rank")
+    l.push(tops, evaled[1].rank)
+    l.push(evals,#evaled)
+    for _,row in pairs(best) do l.push(guess, row.rank) end end
+  print("guess",l.cat(l.pers(guess, {.1,.3,.5,.7,.9})))
+  print("evals",l.cat(l.pers(evals, {.1,.3,.5,.7,.9})))
+  print("tops",l.cat(l.pers(tops,  {.1,.3,.5,.7,.9})))
+  return true
+  end
+
 l.main(the._help, the,go)

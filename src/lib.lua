@@ -46,6 +46,9 @@ function l.tiles(t, args)
                   pers={.25,.5,.75}, -- percentiles to show RHS
                   rank=1           -- what to show LHS
                 },args)
+  table.sort(t)
+  args.lo = math.min(t[1],  args.lo)
+  args.hi = math.max(t[#t], args.hi)
   local norm = function(n) return (n-args.lo) / (args.hi-args.lo) end
   local at   = function(n) return math.floor(args.width*norm(n)) end
   local pos  = function(p) return t[1] + p*(t[#t] - t[1]) end
@@ -55,7 +58,7 @@ function l.tiles(t, args)
   for p = .7,.9,.01 do s[at(l.per(t,p))] = "." end 
   s[at(l.per(t,.5))] = "|"
   s[1], s[#s] = "|","|"
-  return {rank = l.fmt("%s %15s",args.rank,args.txt),
+  return {rank = l.fmt("%s %15s",args.rank,args.txt or ""),
           str  = table.concat(s), 
           mid  = l.per(t,.5),
           per  = l.map(args.pers, function (p) return l.per(t,p) end)} end 
@@ -63,6 +66,9 @@ function l.tiles(t, args)
 ---- ---- ---- Lists
 -- Return any item (selected at random) from list `t`.
 function l.any(t) return t[l.rand(#t)] end
+
+-- function for grabbing
+function l.grab(x) return function(t)  if t[x] then return t end end end
 
 -- Return `num` items (selected at random) from list `t`.
 -- If `num` is more than the size of the list, return that list, shuffled.
@@ -86,6 +92,11 @@ function l.last(t) return t[#t] end
 function l.per(t,p)
   p=p or .5
   p=math.floor((p*#t)+.5); return t[math.max(1,math.min(#t,p))] end
+
+-- Call per for a list of percentiles (is ps).
+function l.pers(t,ps)
+  table.sort(t)
+  return l.map(ps, function(p) return l.per(t,p) end) end
 
 -- Add `x` to list `t`, returning `x`.
 function l.push(t,x) t[1+#t]=x; return x end
@@ -201,6 +212,7 @@ function l.main(sHelp,settings,funs)
     if   type(funs[str]) ~= "function" 
     then return print("?? unknown startup action",str) 
     else math.randomseed(settings.seed)
+         print(settings.seed)
          if true ~= funs[str]() then fails=fails+1; print("FAIL",str) end
          for slot,value in pairs(saved) do settings[slot]=value end end
   end ------
