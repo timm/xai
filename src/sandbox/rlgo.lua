@@ -47,18 +47,35 @@ function go.data(     data1,data2)
 function go.dist(    data1,row1,row2)
   data1=Data.load("../../data/auto93.csv")
   print(#data1.rows)
-  for i = 1,20 do
+  for j = 1,20 do
     row1=l.any(data1.rows)
     row2=l.any(data1.rows)
     print(Row.dist(row1,row2)) end
-  for j,rowd in pairs(Row.around(l.any(data1.rows), data1.rows)) do
-    if j< 5 or j>393 then l.chat(rowd.row.cells) end end 
-  return true end
+  -- for j,rowd in pairs(Row.around(l.any(data1.rows), data1.rows)) do
+  --   if j< 5 or j>393 then l.chat(rowd.row.cells) end end 
+  return true 
+  end
 
 function go.half(    data1,row1,row2)
   data1=Data.load("../../data/auto93.csv")
   local A,B,As,Bs,c = Data.half(data1, data1.rows) 
   print(c, #As, #Bs, l.cat(A.cells), l.cat(B.cells))
+  data2=Data.clone(data1,As)
+  data3=Data.clone(data1,Bs)
+  print("As", l.cat(Data.mid(data2,2)))
+  print("Bs", l.cat(Data.mid(data3,2)))
   return true end
-  
+
+-- function go.trends(    data1,rows)
+--   data1=Data.load("../../data/auto93.csv")
+--   local rows
+--   rows= Data.trends(data1,{})
+--   print("rows:",#rows)
+--   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,1,50)),2)))
+--   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,100,150)),2)))
+--   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,200,250)),2)))
+--   print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,300,350)),2)))
+--   print("Bs", l.cat(Data.mid(Data.clone(data1,l.slice(rows,351)),2))) 
+--   return true end
+--   
 l.main(the._help, the,go)
