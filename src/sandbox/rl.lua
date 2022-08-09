@@ -38,23 +38,22 @@ OPTIONS:
  -s  --seed   random number see            = 10019
  -S  --Some   in "far", how many to search = 10000
 ]]
-local RL   = {About={}, Data={}, Row={},Col={},Xy={},Xys={},the=the}
+local RL   = {About={}, Data={}, Row={},Col={},Xy={},Xys={},Tree={},the=the}
 local About= RL.About -- factory for making columns
 local Data = RL.Data  -- store rows, and their column summaries
 local Row  = RL.Row   -- stores one row. 
 local Col  = RL.Col   -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
 local Xy   = RL.Xy    -- summarize two columns from the same rows
 local Xys  = RL.Xys   -- Manger for sets of "Xy"s.
+local Tree = RL.Tree  -- Manager for sets of "Data"s in a tree structure.
 
--- FYI: I considered splitting Col into two (one for NOMinals and one for
+-- I considered splitting Col into two (one for NOMinals and one for
 -- RATIOs).  But as shown in Col (below), one of those two cases can usually be
 -- handled as a one-liner. So the benefits of that reorg is not large.
 --  
--- One nuance here is that, to save memory, Rows are created by the FIRST Data
--- that sees a record, then shared across every other clone  of the data (e.g.
--- when clustering, the super Data points to the same Row as the sub-Data
--- cluster of all the other rows closest to that first Row).  Since  rows
--- maintains a pointer to its creator Data object, that first data Data can be
+-- To save memory, Rows are created by the firsT Data
+-- that sees a record, then shared across every other clone  of the datav. Rows
+-- hold a pointer to its creator Data object. Hence, that first data Data can be
 -- used to store information about the entire data spaces (e.g. the max and min
 -- possible values for each columns).  This makes certain functions easier like,
 -- say, distance).
@@ -96,8 +95,7 @@ function About.add(i,t)
 --      |  \ |__| |_|_| 
 --                      
 -- Hold one record
-function Row.new(about,t) 
-  return {_about=about, cells=t, cooked=l.map(t,l.same)} end
+function Row.new(about,t) return {_about=about,cells=t,cooked=l.map(t,l.same)} end
 
 -- Everything in rows, sorted by distance to i.
 function Row.around(i,rows)
@@ -123,8 +121,8 @@ function Row.dist(i,j)
   local cols = cols or i._about.x
   for _,col in pairs(cols) do
     x,y = i.cells[col.at], j.cells[col.at]
-    d   = d + col.infoGain+Col.dist(col,x,y)^the.p
-    n   = n + col.infoGain end
+    d   = d + Col.dist(col,x,y)^the.p
+    n   = n + 1 end
   return (d/n)^(1/the.p) end
 --      ____ ____ _    
 --      |    |  | |    
@@ -138,7 +136,6 @@ function Col.new(txt,at)
           txt  = txt,            -- column header
           isNom= txt:find(_is.nom),
           w    = txt:find(_is.less) and -1 or 1,
-          infoGain =1,
           ok   = true,             -- false if some update needed
           _has  = {}} end           -- place to keep (some) column values.
 
@@ -179,10 +176,8 @@ function Col.div(i)
   
 -- Sorted contents
 function Col.has(i)
-  if i.isNom then return i._has else 
-    if not i.ok then table.sort(i._has) end
-    i.ok=true
-    return i._has end end
+  if not i.isNom and not i.ok then table.sort(i._has); i.ok=true end
+  return i._has end 
 
 -- Central tendency (mode,median for NOMs,RATIOs)
 function Col.mid(i)
@@ -239,26 +234,7 @@ function Data.discretize(i)
 -- Diversity
 function Data.div(i) return l.map(i.about.y, Col.div) end
 
-function Data.infoGain(i)
-  for n,rows in pairs(Data.leaves(i,3)) do
-    for _,row in pairs(rows) do
-      row.label= n end end
-  for _,col in pairs(i.about.x) do
-    col.infoGain = Xys.infoGain(Xys.bins(i.rows, col)) end end 
-
--- Recursively bi-cluster one Data into sub-Datas.
-function Data.leaves(i,depth)
-  local stop   = the.Min
-  local leaves = {}
-  local function worker(rows, depth, rowAbove) 
-    if   depth <= 0 or #rows < 2*stop 
-    then l.push(leaves, rows)
-    else local A,B,As,Bs = Data.half(i,rows,rowAbove)
-         worker(As, depth-1, A)
-         worker(Bs, depth-1, B) end end
-  worker(i.rows, depth or 10)
-  return leaves end
-
+   
 -- Split data according to distance to two  distant points A,B
 -- To dodge outliers, don't search all the way to edge (see the.Far).
 -- To speed things up:   
@@ -303,6 +279,42 @@ function Data.best(i,  rows, rowAbove,stop,worst)
        if   Row.better(A,B) 
        then return Data.best(i,As,A,stop,worst or Bs)
        else return Data.best(i,Bs,B,stop,worst or As) end end end 
+--      ___ ____ ____ ____ 
+--       |  |__/ |___ |___ 
+--       |  |  \ |___ |___ 
+--                         
+-- Recursively bi-cluster one Data (adds "kids" pointing to sub-Datas).
+function Tree.new(data)
+  local id=0
+  local function recurse(parent,stop,  rowAbove) 
+    id = id + 1
+    parent.id = id
+    if   #parent.rows >= 2*stop 
+    then local A,B,As,Bs = Data.half(data0, parent.rows, rowAbove)
+         parent.kids= { recurse(Data.clone(data,As), stop, A),
+                        recurse(Data.clone(data,Bs), stop, B)} end 
+    return parent end
+  return recurse(data,the.Min) end
+
+function Tree.loop(data,fun,  lvl)
+  fun(data,lvl or 0)
+  for _,kid in pairs(data.kids or {}) do Tree.loop(kid,fun,(lvl or 0) +1) end end
+
+function Tree.print(data)
+  Tree.loop(data, function(data,lvl)
+    io.write(("|.. "):rep(lvl))
+    print(l.fmt("%s",#data.rows)) end) 
+  return data end
+
+function Tree.rank(data,lvl)
+  local support  =1/(2^lvl)
+  if not data.kids then return 0 end
+  for n,kid in pairs(data.kids) do 
+    for _,row in pairs(kid.rows) do 
+      row.label = n end end
+  for _,col in pairs(data.about.x) do
+    local score = support * Xys.score(Xys.bins(data.rows, col)) 
+    print(data.id, (".. "):rep(lvl), #data.rows, score) end end
 --      _  _ _   _ 
 --       \/   \_/  
 --      _/\_   |   
@@ -340,27 +352,20 @@ function Xys.bins(rows,col)
   local tmp={}
   for n,xy in pairs(xys) do l.push(tmp,xy) end
   xys = l.sort(tmp, l.lt"xlo")
-  return col.isNom and xys or Xys._merges(xys,n^.5) end
+  return col.isNom and xys or Xys.merges(xys,n^.5) end
 
-function Xys.infoGain(xys)
-  local n,out,all=0,0,Col.nom()
-  for _,xy in pairs(xys) do 
-    for x,n in pairs(xy.y._has) do Col.add(all,x,n) end
-    n   = n   + xy.y.n end
-  for _,xy in pairs(xys) do out = out + xy.y.n/n * Col.div(xy.y) end
-  return Col.div(all) - out end
 
 -- While adjacent things can be merged, keep merging.
 -- Then make sure the bins to cover &pm; &infin;.
-function Xys._merges(xys0,nMin) 
+function Xys.merges(xys0,nMin) 
   local n,xys1 = 1,{}
   while n <= #xys0 do
-    local xymerged = n<#xys0 and Xys._merged(xys0[n],xys0[n+1],nMin) 
+    local xymerged = n<#xys0 and Xys.merged(xys0[n],xys0[n+1],nMin) 
     xys1[#xys1+1]  = xymerged or xys0[n]
     n = n + (xymerged and 2 or 1) -- if merged, skip next bin
   end
   if   #xys1 < #xys0 
-  then return Xys._merges(xys1,nMin) 
+  then return Xys.merges(xys1,nMin) 
   else xys1[1].xlo = -l.big
        for n=2,#xys1 do xys1[n].xlo = xys1[n-1].xhi end 
        xys1[#xys1].xhi = l.big
@@ -369,7 +374,7 @@ function Xys._merges(xys0,nMin)
 -- Merge two bins if they are too small or too complex.
 -- E.g. if each bin only has "rest" values, then combine them.
 -- Returns nil otherwise (which is used to signal "no merge possible").
-function Xys._merged(xy1,xy2,nMin)   
+function Xys.merged(xy1,xy2,nMin)   
   local i,j= xy1.y, xy2.y
   local k = Col.nom(i.txt, i.at)
   for x,n in pairs(i._has) do Col.add(k,x,n) end
@@ -379,6 +384,11 @@ function Xys._merged(xy1,xy2,nMin)
   if tooSmall or tooComplex then 
     return Xy.new(xy1.txt,xy1.at, xy1.xlo, xy2.xhi, k) end end 
 
+function Xys.score(xys)
+  local n,xpect = 0,0
+  for _,xy in pairs(xys) do n = n + xy.y.n end
+  for _,xy in pairs(xys) do xpect = xy.y.n/n * Col.div(xy.y) end
+  return xpect,xys end
 
 -- ----------------------------------------------------------------------------
 return RL

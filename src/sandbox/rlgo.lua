@@ -7,6 +7,7 @@ local Row  = r.Row
 local Col  = r.Col
 local Xy   = r.Xy 
 local Xys  = r.Xys
+local Tree = r.Tree
 local the  = r.the
 
 local go={}
@@ -68,16 +69,13 @@ function go.half()
   print("Bs", l.cat(Data.mid(data3,2)))
   return true end
 
-function go.leaves()
-  local data1=Data.load("../../data/SSM.csv")
-  for _,rows in pairs(Data.leaves(data1,3)) do print(#rows) end
+function go.tree()
+  local tree= Tree.print(
+                Tree.new(
+                  Data.load("../../data/auto93.csv"))) 
+  Tree.loop(tree,function(data,lvl)
+    Tree.rank(data,lvl) end)
   return true end
-
-function go.weights()
-  local data1=Data.load("../../data/pom.csv")
-  Data.infoGain(data1)
-  return true
-  end
 
 local function quota(f)
   print("\n"..f)
@@ -88,7 +86,6 @@ local function quota(f)
     io.write(".");io.flush()
     local data1=Data.load(f)
     Data.cheat(data1)
-    --Data.infoGain(data1)
     local best = Data.best(data1)
     local evaled = l.sort(l.map(data1.rows, l.grab"evaled"),l.lt"rank")
     l.push(tops, evaled[1].rank)
@@ -104,7 +101,7 @@ local function quota(f)
 function go.quota()
   --quota("../../data/auto93.csv") 
   quota(the.file)
-  --quota("../../data/auto2.csv") 
+  -- quota("../../data/auto2.csv") 
   --quota("../../data/SSM.csv") 
   --quota("../../data/china.csv") 
   --quota("../../data/coc10000.csv") 
