@@ -23,7 +23,7 @@ R=$(shell git rev-parse --show-toplevel)
 	@ps2pdf $@.ps $@; rm $@.ps; git add $@
 
 common:
-	egrep '\<l\>.' rl.lua rlgo.lua \
+	egrep '\<l\>.' $F \
 	| sed 's/l\./LL/g' \
 	| grep -o -E "(\w|')+" \
 	| grep LL | sort | uniq -c | sort -n
