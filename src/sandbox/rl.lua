@@ -297,7 +297,7 @@ function Data.trends(i,out,  rowAbove,stop)
   stop = stop or (#i.rows)^the.Min
   out = out or {}
   if   #i.rows < stop 
-  then for _,row in pairs(l.rev(i.rows)) do l.push(out,row) end
+  then for _,row in pairs(i.rows) do l.push(out,row) end
   else local A,B,As,Bs,c = Data.half(i, i.rows, rowAbove)
        if   Row.better(A,B) 
        then for j=#Bs,1,-1 do l.push(out,Bs[j]) end
