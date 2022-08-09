@@ -1,3 +1,19 @@
+-- Heuristically sort rows by trends in the y-values
+-- (specifically, evaluated two remote points, sort worse
+-- half by distance to best point, recurse on best half).
+function Data.trends(i,out,  rowAbove,stop)
+  stop = stop or (#i.rows)^the.Min
+  out = out or {}
+  if   #i.rows < stop 
+  then for _,row in pairs(i.rows) do l.push(out,row) end
+  else local A,B,As,Bs,c = Data.half(i, i.rows, rowAbove)
+       if   Row.better(A,B) 
+       then for j=#Bs,1,-1 do l.push(out,Bs[j]) end
+            Data.trends(Data.clone(i,l.rev(As)), out,A, stop)
+       else for _,row in pairs(As) do l.push(out,row) end
+            Data.trends(Data.clone(i,Bs), out,B, stop) end end 
+  return out end
+
 l=require"lib"
 per=l.per
 map=l.map

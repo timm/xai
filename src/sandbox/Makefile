@@ -21,3 +21,9 @@ R=$(shell git rev-parse --show-toplevel)
 		-M letter                        \
 		-o $@.ps $<
 	@ps2pdf $@.ps $@; rm $@.ps; git add $@
+
+common:
+	egrep '\<l\>.' rl.lua rlgo.lua \
+	| sed 's/l\./LL/g' \
+	| grep -o -E "(\w|')+" \
+	| grep LL | sort | uniq -c | sort -n

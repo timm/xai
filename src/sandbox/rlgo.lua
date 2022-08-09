@@ -5,6 +5,8 @@ local About= r.About
 local Data = r.Data
 local Row  = r.Row
 local Col  = r.Col
+local Xy   = r.Xy 
+local Xys  = r.Xys
 local the  = r.the
 
 local go={}
@@ -66,36 +68,50 @@ function go.half()
   print("Bs", l.cat(Data.mid(data3,2)))
   return true end
 
-function go.trends()
-  local data1=Data.load("../../data/auto93.csv")
-  Data.cheat(data1)
-  local rows= Data.trends(data1)
-  print("rows:",#rows)
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,1,50)),2)))
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,100,150)),2)))
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,200,250)),2)))
-  print("As", l.cat(Data.mid(Data.clone(data1,l.slice(rows,300,350)),2)))
-  print("Bs", l.cat(Data.mid(Data.clone(data1,l.slice(rows,351)),2))) 
-  print(#l.map(data1.rows,l.grab"evaled"))
-  for j,row in pairs(rows) do print(j,row.rank) end
+function go.leaves()
+  local data1=Data.load("../../data/SSM.csv")
+  for _,rows in pairs(Data.leaves(data1,3)) do print(#rows) end
   return true end
 
-function go.quota()
+function go.weights()
+  local data1=Data.load("../../data/pom.csv")
+  Data.infoGain(data1)
+  return true
+  end
+
+local function quota(f)
+  print("\n"..f)
   local evals = {} 
   local guess = {}
   local tops  = {}
-  for r=1,20 do
-    local data1=Data.load("../../data/auto93.csv")
+  for r=1,20 do 
+    io.write(".");io.flush()
+    local data1=Data.load(f)
     Data.cheat(data1)
+    --Data.infoGain(data1)
     local best = Data.best(data1)
     local evaled = l.sort(l.map(data1.rows, l.grab"evaled"),l.lt"rank")
     l.push(tops, evaled[1].rank)
     l.push(evals,#evaled)
     for _,row in pairs(best) do l.push(guess, row.rank) end end
-  print("guess",l.cat(l.pers(guess, {.1,.3,.5,.7,.9})))
+  print("\nguess",l.cat(l.pers(guess, {.1,.3,.5,.7,.9})))
   print("evals",l.cat(l.pers(evals, {.1,.3,.5,.7,.9})))
   print("tops",l.cat(l.pers(tops,  {.1,.3,.5,.7,.9})))
-  return true
+  print(the.Min)
   end
+
+
+function go.quota()
+  --quota("../../data/auto93.csv") 
+  quota(the.file)
+  --quota("../../data/auto2.csv") 
+  --quota("../../data/SSM.csv") 
+  --quota("../../data/china.csv") 
+  --quota("../../data/coc10000.csv") 
+  --quota("../../data/healthCloseIsses12mths0011-easy.csv") 
+  --quota("../../data/healthCloseIsses12mths0001-hard.csv") 
+  --quota("../../data/pom.csv") 
+  --the.Min=3; quota("../../data/nasa93dem.csv") 
+  return true end
 
 l.main(the._help, the,go)

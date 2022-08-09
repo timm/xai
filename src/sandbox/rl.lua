@@ -27,21 +27,24 @@ USAGE:
   lua rlgo.lua [ -bFghksS [ARG] ]
 
 OPTIONS:
- -b  --bins   discretization control        = 8
+ -b  --bins   discretization control       = 8
  -F  --Far    in "far", how far to seek    = .95
+ -f  --file   data file = ../../data/auto93.csv
  -g  --go     start-up action              = pass
  -h  --help   show help                    = false
  -k  --keep   keep only these nums         = 512
- -m  --Min    stop at N^m                  = .5
+ -M  --Min    stop at m                    = 10
  -p  --p      distance coefficient         = 2
  -s  --seed   random number see            = 10019
- -S  --Some   in "far", how many to search = 512
+ -S  --Some   in "far", how many to search = 10000
 ]]
-local RL   = {About={}, Data={}, Row={},Col={},the=the}
+local RL   = {About={}, Data={}, Row={},Col={},Xy={},Xys={},the=the}
 local About= RL.About -- factory for making columns
-local Data = RL.Data -- store rows, and their column summaries
-local Row  = RL.Row -- stores one row. 
-local Col  = RL.Col -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
+local Data = RL.Data  -- store rows, and their column summaries
+local Row  = RL.Row   -- stores one row. 
+local Col  = RL.Col   -- summarize 1 column. Has 2 roles-- NOMinal,RATIO for syms,nums
+local Xy   = RL.Xy    -- summarize two columns from the same rows
+local Xys  = RL.Xys   -- Manger for sets of "Xy"s.
 
 -- FYI: I considered splitting Col into two (one for NOMinals and one for
 -- RATIOs).  But as shown in Col (below), one of those two cases can usually be
@@ -78,7 +81,7 @@ function About._cols(i,sNames)
     local col = l.push(i.all, Col.new(name,at))
     if not name:find(_is.skip) then
       l.push(name:find(_is.goal) and i.y or i.x, col)
-      if name:find(_is.klass) then i.klass=col end end end
+      if name:find(_is.klass) then i.klass=col end end end  
   return i end
 
 -- Update, only the non-skipped cols (i.e. those found in i.x and j.x.
@@ -120,8 +123,8 @@ function Row.dist(i,j)
   local cols = cols or i._about.x
   for _,col in pairs(cols) do
     x,y = i.cells[col.at], j.cells[col.at]
-    d   = d + Col.dist(col,x,y)^the.p
-    n   = n + 1 end
+    d   = d + col.infoGain+Col.dist(col,x,y)^the.p
+    n   = n + col.infoGain end
   return (d/n)^(1/the.p) end
 --      ____ ____ _    
 --      |    |  | |    
@@ -135,6 +138,7 @@ function Col.new(txt,at)
           txt  = txt,            -- column header
           isNom= txt:find(_is.nom),
           w    = txt:find(_is.less) and -1 or 1,
+          infoGain =1,
           ok   = true,             -- false if some update needed
           _has  = {}} end           -- place to keep (some) column values.
 
@@ -197,7 +201,7 @@ function Col.norm(i,x)
 -- Map x to a small range of values. For NOMs, x maps to itself.
 function Col.discretize(i,x)
   if i.isNom then return x else 
-    local has = has(i)
+    local has = Col.has(i)
     local lo,hi = has[1], has[#has]
     local b = (hi - lo)/the.bins
     return hi==lo and 1 or math.floor(x/b+.5)*b  end end
@@ -224,7 +228,7 @@ function Data.clone(i,  t)
   for _,row in pairs(t or {}) do Data.add(out,row) end
   return out end
 
--- Discretize all row values (writing those vals to "cooked").
+-- Discretize all row values (writing those vvalues to "cooked").
 function Data.discretize(i)
   for _,row in pairs(i.rows) do
     for _,col in pairs(i.about.x) do
@@ -235,15 +239,25 @@ function Data.discretize(i)
 -- Diversity
 function Data.div(i) return l.map(i.about.y, Col.div) end
 
+function Data.infoGain(i)
+  for n,rows in pairs(Data.leaves(i,3)) do
+    for _,row in pairs(rows) do
+      row.label= n end end
+  for _,col in pairs(i.about.x) do
+    col.infoGain = Xys.infoGain(Xys.bins(i.rows, col)) end end 
+
 -- Recursively bi-cluster one Data into sub-Datas.
-function Data.cluster(i,  rowAbove,stop)
-  stop = stop or (#i.rows)^the.Min
-  if #i.rows >= 2*stop then 
-    local A,B,As,Bs,c = Data.half(i.rows,rowAbove)
-    i.halves = {c=c, A=A, B=B,
-                kids = { Data.cluster(Data.clone(i,As), A, stop),
-                         Data.cluster(Data.clone(i,Bs), B, stop) }}end
-  return i end
+function Data.leaves(i,depth)
+  local stop   = the.Min
+  local leaves = {}
+  local function worker(rows, depth, rowAbove) 
+    if   depth <= 0 or #rows < 2*stop 
+    then l.push(leaves, rows)
+    else local A,B,As,Bs = Data.half(i,rows,rowAbove)
+         worker(As, depth-1, A)
+         worker(Bs, depth-1, B) end end
+  worker(i.rows, depth or 10)
+  return leaves end
 
 -- Split data according to distance to two  distant points A,B
 -- To dodge outliers, don't search all the way to edge (see the.Far).
@@ -279,30 +293,92 @@ function Data.mid(i)
   for _,col in pairs(i.about.y) do t.n=#i.rows; t[col.txt] = Col.mid(col) end 
   return t end
 
-function Data.best(i,  rowAbove,stop)
-  stop = stop or 10 --(#i.rows)^the.Min
-  if   #i.rows <= stop 
-  then return i.rows
-  else local A,B,As,Bs,c = Data.half(i, i.rows, rowAbove)
+-- Return final best and first worst
+function Data.best(i,  rows, rowAbove,stop,worst)
+  stop = stop or the.Min
+  rows = rows or i.rows
+  if   #rows <= stop 
+  then return rows,worst
+  else local A,B,As,Bs,c = Data.half(i, rows, rowAbove)
        if   Row.better(A,B) 
-       then return Data.best(Data.clone(i,As),A,stop)
-       else return Data.best(Data.clone(i,l.rev(Bs)),B,stop) end end end 
+       then return Data.best(i,As,A,stop,worst or Bs)
+       else return Data.best(i,Bs,B,stop,worst or As) end end end 
+--      _  _ _   _ 
+--       \/   \_/  
+--      _/\_   |   
+function Xy.new(str,at,num1,num2,nom)
+  return {txt = str,
+          at  = at,
+          xlo = num1, 
+          xhi = num2 or num1, 
+          y   = nom or Col.nom(str,at)} end
 
--- Heuristically sort rows by trends in the y-values
--- (specifically, evaluated two remote points, sort worse
--- half by distance to best point, recurse on best half).
-function Data.trends(i,out,  rowAbove,stop)
-  stop = stop or (#i.rows)^the.Min
-  out = out or {}
-  if   #i.rows < stop 
-  then for _,row in pairs(i.rows) do l.push(out,row) end
-  else local A,B,As,Bs,c = Data.half(i, i.rows, rowAbove)
-       if   Row.better(A,B) 
-       then for j=#Bs,1,-1 do l.push(out,Bs[j]) end
-            Data.trends(Data.clone(i,l.rev(As)), out,A, stop)
-       else for _,row in pairs(As) do l.push(out,row) end
-            Data.trends(Data.clone(i,Bs), out,B, stop) end end 
-  return out end
+function Xy.add(i,x,y)
+  i.xlo = math.min(x, i.xlo)
+  i.xhi = math.max(x, i.xhi)
+  Col.add(i.y, y) end
+
+function Xy.show(i)
+  local x,lo,hi = i.txt, i.xlo, i.xhi
+  if     lo ==    hi  then return l.fmt("%s == %s", x, lo)
+  elseif hi ==  l.big then return l.fmt("%s >  %s", x, lo)
+  elseif lo == -l.big then return l.fmt("%s <= %s", x, hi)
+  else                     return l.fmt("%s <  %s <= %s", lo,x,hi) end end
+
+
+-- Xys is a set of class methods that handle lists of "Xy"s.
+function Xys.bins(rows,col)
+  local n,xys = 0,{} 
+  for _,row in pairs(rows) do
+    local x = row.cells[col.at]
+    if x~= "?" then
+      n = n+1
+      local bin = Col.discretize(col,x)
+      local xy  = xys[bin] or Xy.new(col.txt,col.at, x)
+      Xy.add(xy, x, row.label)
+      xys[bin] = xy end end
+  local tmp={}
+  for n,xy in pairs(xys) do l.push(tmp,xy) end
+  xys = l.sort(tmp, l.lt"xlo")
+  return col.isNom and xys or Xys._merges(xys,n^.5) end
+
+function Xys.infoGain(xys)
+  local n,out,all=0,0,Col.nom()
+  for _,xy in pairs(xys) do 
+    for x,n in pairs(xy.y._has) do Col.add(all,x,n) end
+    n   = n   + xy.y.n end
+  for _,xy in pairs(xys) do out = out + xy.y.n/n * Col.div(xy.y) end
+  return Col.div(all) - out end
+
+-- While adjacent things can be merged, keep merging.
+-- Then make sure the bins to cover &pm; &infin;.
+function Xys._merges(xys0,nMin) 
+  local n,xys1 = 1,{}
+  while n <= #xys0 do
+    local xymerged = n<#xys0 and Xys._merged(xys0[n],xys0[n+1],nMin) 
+    xys1[#xys1+1]  = xymerged or xys0[n]
+    n = n + (xymerged and 2 or 1) -- if merged, skip next bin
+  end
+  if   #xys1 < #xys0 
+  then return Xys._merges(xys1,nMin) 
+  else xys1[1].xlo = -l.big
+       for n=2,#xys1 do xys1[n].xlo = xys1[n-1].xhi end 
+       xys1[#xys1].xhi = l.big
+       return xys1 end end
+
+-- Merge two bins if they are too small or too complex.
+-- E.g. if each bin only has "rest" values, then combine them.
+-- Returns nil otherwise (which is used to signal "no merge possible").
+function Xys._merged(xy1,xy2,nMin)   
+  local i,j= xy1.y, xy2.y
+  local k = Col.nom(i.txt, i.at)
+  for x,n in pairs(i._has) do Col.add(k,x,n) end
+  for x,n in pairs(j._has) do Col.add(k,x,n) end
+  local tooSmall   = i.n < nMin or j.n < nMin 
+  local tooComplex = Col.div(k) <= (i.n*Col.div(i) + j.n*Col.div(j))/k.n 
+  if tooSmall or tooComplex then 
+    return Xy.new(xy1.txt,xy1.at, xy1.xlo, xy2.xhi, k) end end 
+
 
 -- ----------------------------------------------------------------------------
 return RL
