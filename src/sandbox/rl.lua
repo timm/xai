@@ -307,14 +307,14 @@ function Tree.print(data)
   return data end
 
 function Tree.rank(data,lvl)
+  data.good =0
   local support  =1/(2^lvl)
   if not data.kids then return 0 end
   for n,kid in pairs(data.kids) do 
     for _,row in pairs(kid.rows) do 
       row.label = n end end
   for _,col in pairs(data.about.x) do
-    local score = support * Xys.score(Xys.bins(data.rows, col)) 
-    print(data.id, (".. "):rep(lvl), #data.rows, score) end end
+    data.good = data.good + support * Xys.score(Xys.bins(data.rows, col))  end end
 --      _  _ _   _ 
 --       \/   \_/  
 --      _/\_   |   

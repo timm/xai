@@ -70,11 +70,12 @@ function go.half()
   return true end
 
 function go.tree()
-  local tree= Tree.print(
-                Tree.new(
-                  Data.load("../../data/auto93.csv"))) 
-  Tree.loop(tree,function(data,lvl)
-    Tree.rank(data,lvl) end)
+  local data= Data.load("../../data/auto93.csv") 
+  local tree= Tree.new(data)
+  local nodes={}
+  Tree.loop(tree,function(data,lvl) l.push(nodes,data); Tree.rank(data,lvl) end)
+  local best = l.sort(nodes,l.gt"good")[1]
+  print(#best.rows)
   return true end
 
 local function quota(f)
