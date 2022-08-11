@@ -306,15 +306,15 @@ function Tree.print(data)
     print(l.fmt("%s",#data.rows)) end) 
   return data end
 
-function Tree.rank(data,lvl)
-  data.good =0
-  local support  =1/(2^lvl)
+function Tree.rank(data)
+  local out=0
   if not data.kids then return 0 end
   for n,kid in pairs(data.kids) do 
     for _,row in pairs(kid.rows) do 
       row.label = n end end
   for _,col in pairs(data.about.x) do
-    data.good = data.good + support * Xys.score(Xys.bins(data.rows, col))  end end
+    out = out + Xys.score(Xys.bins(data.rows, col))  end 
+  return out end
 --      _  _ _   _ 
 --       \/   \_/  
 --      _/\_   |   
@@ -337,7 +337,6 @@ function Xy.show(i)
   elseif lo == -l.big then return l.fmt("%s <= %s", x, hi)
   else                     return l.fmt("%s <  %s <= %s", lo,x,hi) end end
 
-
 -- Xys is a set of class methods that handle lists of "Xy"s.
 function Xys.bins(rows,col)
   local n,xys = 0,{} 
@@ -353,7 +352,6 @@ function Xys.bins(rows,col)
   for n,xy in pairs(xys) do l.push(tmp,xy) end
   xys = l.sort(tmp, l.lt"xlo")
   return col.isNom and xys or Xys.merges(xys,n^.5) end
-
 
 -- While adjacent things can be merged, keep merging.
 -- Then make sure the bins to cover &pm; &infin;.
