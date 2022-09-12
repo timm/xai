@@ -90,6 +90,7 @@ local function quota(f)
   local evals = {} 
   local guess = {}
   local tops  = {}
+  l.chat(the)
   for r=1,20 do 
     io.write(".");io.flush()
     local data1=Data.load(f)
