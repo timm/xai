@@ -1,18 +1,105 @@
 ---
-title:  A quick primer on XAI scripting
+title: "A quick primer on XAI scripting"
 author: |
-  <img src=img/xai.png width=350 align=right>
   Tim Menzies\
-  timm@ieee.org\
-  \
+  timm@ieee.org
+
   Shane McIntosh\
-  shanemcintosh@acm.org\
-  \
-  Oct 2025
-css: style.css
+  shanemcintosh@acm.org
+date: Oct 2025
+
+toc: true
+toc-depth: 2
+highlight-style: pygments
+
+header-includes:
+  - |
+    <style>
+      /* --- Layout and body text --- */
+      body {
+        max-width: 600px;
+        margin: auto;
+        font-family: Georgia, serif;
+        line-height: 1.5;
+      }
+
+      /* --- Floating Table of Contents --- */
+      #TOC {
+        position: fixed;
+        top: 1em;
+        left: 1em;
+        width: 200px;
+        max-height: 90%;
+        overflow-y: auto;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 0.5em;
+        z-index: 1000;
+      }
+
+      /* Make sure ToC text is visible and styled */
+      #TOC, #TOC * {
+        color: inherit !important;
+        visibility: visible !important;
+        display: block !important;
+      }
+      #TOC a {
+        text-decoration: none;
+        color: #333;
+      }
+      #TOC a:hover {
+        text-decoration: underline;
+        color: #000;
+      }
+      #TOC ul {
+        list-style: none;
+        padding-left: 0;
+        margin-left: 0;
+      }
+      #TOC li {
+        margin: 0.2em 0;
+      }
+
+      /* Shift main body to make room for TOC */
+      body { margin-left: 220px; }
+
+      /* --- Code block styling --- */
+      pre code {
+        font-size: 75%;
+        xbackground: #f7f7f7;
+        xborder: 1px solid blue; 
+        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+        xpadding: 0.5em;
+        xborder-radius: 4px;
+        xdisplay: block;
+        xoverflow-x: auto;
+      }
+
+      /* --- Dark mode --- */
+      body.dark { background:#111; color:#eee; }
+      body.dark a { color: #6cf; }
+
+      /* Optional: collapse TOC on narrow screens */
+      @media (max-width: 800px) {
+        #TOC { display: none; }
+        body { margin-left: auto; }
+      }
+    </style>
+    <script>
+      function toggleDark() {
+        document.body.classList.toggle('dark');
+      }
+    </script>
+
+include-before-body: |
+  <button onclick="toggleDark()" 
+          style="position:fixed;top:1em;right:1em;
+                 z-index:999;font-size:1.2em;">🌙</button>
 ---
 
--------
+
+<img src="https://media.licdn.com/dms/image/v2/C5112AQF2uhimL9_E7Q/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1536912136344?e=1762992000&v=beta&t=ELpC8PM9rcYgFEtlSdS2KWbrhGOTyMovKe3DV5-z1BI"
+width=400 align=right>
 
 Artificial intelligence comes in many forms. Some of it dazzles but
 remains a mystery—black-box systems that are hard to interpret, let
@@ -20,9 +107,9 @@ alone maintain. Yet not all AI is like this. A growing family of
 explainable AI (XAI) techniques aim to deliver insights in ways
 that people can actually follow and trust.
 
-We write from the perspective of decades in software analytics,
-where the job is to dig through sprawling, messy data and pull out
-clear, defensible nuggets of knowledge. Over the years, we’ve
+This short document shows the XAI techniques we have beeen using, for decades, for software analytic,
+Our job is to dig through sprawling, messy data and pull out
+clear, defensible nuggets of knowledge. Over the years, we gave
 developed a toolkit of approaches that make complex patterns simple,
 and simple stories powerful.
 
@@ -32,7 +119,104 @@ critique. Most importantly, the results can be understood,
 debated, and acted upon by teams of people seeking actionable
 insights into their own domains.
 
-## In the Beginning, were $Sym$bols and $Num$bers
+## Our Structure
+
+ lts of egs'
+
+This document is structure around a study of real world data miners, working at Mcirosoft [^amershi19].
+That work showed that actually "modeling training " (i.e. running the data mining algorithms) was only
+around 10% of a larger process. In the bigger process, much time needs to be spent determining the goals
+of the learning, checking the data up front, then monitoring the deployed AI since:
+
+> Data mining can be very error prone; so we need to check for
+those errors at every step of our process.
+
+
+
+
+[^amershi19]: S. Amershi et al., 
+[Software Engineering for Machine Learning: A Case Study](https://www.microsoft.com/en-us/research/wp-content/uploads/2019/03/amershi-icse-2019_Software_Engineering_for_Machine_Learning.pdf), 
+2019 IEEE/ACM 41st International Conference
+on Software Engineering: Software Engineering in Practice (ICSE-SEIP),
+Montreal, QC, Canada, 2019, pp. 291-300, doi: 10.1109/ICSE-SEIP.2019.00042.
+
+When we get to the data mining,
+for those of you  that like "rolling your own", we present a tiny
+home brew data mining tool kit that does clustering, rule learning, tree learning,
+optimization in just 200 lines of code. The lesson of this first part 
+is that:
+
+> Many of these AI tools are very simple and can be created and combined
+using very little coding.
+
+After that, we repeat all the presentation using a standard machine learning
+library (scikit-learn). The lesson of this second part is that:
+
+> There are many tools
+can can help you with your data mining.
+
+## Installation
+
+Call up a  terminal, make sure you have **git** and  gawk 3.1 dn,mdcdddddddddddddddddddddddddddddddddddd**python3.13** (or later) installed, then
+
+    mkdir xai                               # or any other name you line
+    cd xai
+    git clone http://github.com/timm/moot   # example data
+    git clone http://github.com/timm/ezr    # code
+    cd erz
+    python3 -m ezr -h
+    python3 -m ezr -f ../../moot/optimize/config/SS-A.csv
+
+If that works, you should see something like
+
+    ezr.py (v0.5): lightweight XAI for multi-objective optimization
+    (c) 2025, Tim Menzies <timm@ieee.org>, MIT license
+    [code](https://github.com/timm/ezr) ::
+    [data](https://github.com/timm/moot)
+    
+    Options:
+    
+        -a  acq=near          label with (near|xploit|xplor|bore|adapt)
+        -A  Any=4             on init, how many initial guesses?
+        -B  Budget=30         when growing theory, how many labels?
+        -C  Check=5           budget for checking learned model
+        -D  Delta=smed        effect size test for cliff's delta
+        -F  Few=128           sample size of data random sampling
+        -K  Ks=0.95           confidence for Kolmogorovâ€"Smirnov test
+        -l  leaf=3            min items in tree leaves
+        -m  m=1               Bayes low frequency param
+        -p  p=2               distance co-efficient
+        -s  seed=1234567891   random number seed
+        -f  file=../moot/optimize/misc/auto93.csv    data file
+        -h                     show help
+    
+     File:    ../../moot/optimize/config/SS-A.csv
+     Rows:    1343
+     X:       3
+     Y:       2 Throughput+ Latency-
+     
+     n:  26   win:   53     if Counters > 7
+     n:  15   win:   60     |  if Counters > 14
+     n:   3   win:   90     |  |  if Spout_wait > 9;
+     n:  12   win:   52     |  |  if Spout_wait <= 9
+     n:   7   win:   63     |  |  |  if Spliters > 4
+     n:   4   win:   66     |  |  |  |  if Spout_wait <= 4;
+     n:   3   win:   59     |  |  |  |  if Spout_wait > 4;
+     n:   5   win:   37     |  |  |  if Spliters <= 4;
+     n:  11   win:   44     |  if Counters <= 14
+     n:   7   win:   48     |  |  if Spout_wait > 4
+     n:   3   win:   52     |  |  |  if Spliters > 4;
+     n:   4   win:   45     |  |  |  if Spliters <= 4;
+     n:   4   win:   37     |  |  if Spout_wait <= 4;
+     n:   4   win:  -84     if Counters <= 7;
+     
+     Used:  Spout_wait Spliters Counters
+     Best train: 100 hold-out: 63
+
+
+
+
+## Symbols and Numbers
 
 To begin at the beginning, in this world, there are $Sym$bols and $Num$bers.
 
@@ -40,6 +224,9 @@ To begin at the beginning, in this world, there are $Sym$bols and $Num$bers.
 not equals);
 - $Num$bers  can be combined together (using addition,
 multiplication, etc).
+- The difference between $Sym$bols and $Num$bers is that there is nothing
+  in between each symbol, but numbers can be interpolated to fill in that gap
+  (e.g. some new number is the average of two existing numbers).
 
 ```py
 from types import simplenamespace as o

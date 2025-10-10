@@ -6,6 +6,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>A quick primer on XAI scripting</title>
   <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -22,8 +167,9 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
     /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -34,7 +180,7 @@
     }
     @media print {
     pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
     }
     pre.numberSource code
       { counter-reset: source-line 0; }
@@ -86,40 +232,201 @@
     code span.vs { color: #4070a0; } /* VerbatimString */
     code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* --- Layout and body text --- */
+    body {
+      max-width: 600px;
+      margin: auto;
+      font-family: Georgia, serif;
+      line-height: 1.5;
+    }
+
+    /* --- Floating Table of Contents --- */
+    #TOC {
+      position: fixed;
+      top: 1em;
+      left: 1em;
+      width: 200px;
+      max-height: 90%;
+      overflow-y: auto;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 0.5em;
+      z-index: 1000;
+    }
+
+    /* Make sure ToC text is visible and styled */
+    #TOC, #TOC * {
+      color: inherit !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+    #TOC a {
+      text-decoration: none;
+      color: #333;
+    }
+    #TOC a:hover {
+      text-decoration: underline;
+      color: #000;
+    }
+    #TOC ul {
+      list-style: none;
+      padding-left: 0;
+      margin-left: 0;
+    }
+    #TOC li {
+      margin: 0.2em 0;
+    }
+
+    /* Shift main body to make room for TOC */
+    body { margin-left: 220px; }
+
+    /* --- Code block styling --- */
+    pre code {
+      font-size: 75%;
+      xbackground: #f7f7f7;
+      xborder: 1px solid blue; 
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
+      xpadding: 0.5em;
+      xborder-radius: 4px;
+      xdisplay: block;
+      xoverflow-x: auto;
+    }
+
+    /* --- Dark mode --- */
+    body.dark { background:#111; color:#eee; }
+    body.dark a { color: #6cf; }
+
+    /* Optional: collapse TOC on narrow screens */
+    @media (max-width: 800px) {
+      #TOC { display: none; }
+      body { margin-left: auto; }
+    }
+  </style>
+  <script>
+    function toggleDark() {
+      document.body.classList.toggle('dark');
+    }
+  </script>
 </head>
 <body>
 <header id="title-block-header">
 <h1 class="title">A quick primer on XAI scripting</h1>
-<p class="author"><p><img src=img/xai.png width=350 align=right> Tim
-Menzies<br />
-timm@ieee.org<br />
-<br />
-Shane McIntosh<br />
-shanemcintosh@acm.org<br />
-<br />
-Oct 2025</p></p>
+<p class="author"><p>Tim Menzies<br />
+timm@ieee.org</p>
+<p>Shane McIntosh<br />
+shanemcintosh@acm.org</p></p>
+<p class="date">Oct 2025</p>
 </header>
-<hr />
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#our-structure" id="toc-our-structure">Our
+Structure</a></li>
+<li><a href="#installation" id="toc-installation">Installation</a></li>
+<li><a href="#symbols-and-numbers" id="toc-symbols-and-numbers">Symbols
+and Numbers</a></li>
+</ul>
+</nav>
+<p><img src="https://media.licdn.com/dms/image/v2/C5112AQF2uhimL9_E7Q/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1536912136344?e=1762992000&v=beta&t=ELpC8PM9rcYgFEtlSdS2KWbrhGOTyMovKe3DV5-z1BI"
+width=400 align=right></p>
 <p>Artificial intelligence comes in many forms. Some of it dazzles but
 remains a mystery—black-box systems that are hard to interpret, let
 alone maintain. Yet not all AI is like this. A growing family of
 explainable AI (XAI) techniques aim to deliver insights in ways that
 people can actually follow and trust.</p>
-<p>We write from the perspective of decades in software analytics, where
-the job is to dig through sprawling, messy data and pull out clear,
-defensible nuggets of knowledge. Over the years, we’ve developed a
-toolkit of approaches that make complex patterns simple, and simple
-stories powerful.</p>
+<p>This short document shows the XAI techniques we have beeen using, for
+decades, for software analytic, Our job is to dig through sprawling,
+messy data and pull out clear, defensible nuggets of knowledge. Over the
+years, we gave developed a toolkit of approaches that make complex
+patterns simple, and simple stories powerful.</p>
 <p>In this paper we want to share those approaches. They are lighter
 than today’s heavyweight LLMs and easier to use and explain and
 critique. Most importantly, the results can be understood, debated, and
 acted upon by teams of people seeking actionable insights into their own
 domains.</p>
-<h2 id="in-the-beginning-were-symbols-and-numbers">In the Beginning,
-were <span class="math inline"><em>S</em><em>y</em><em>m</em></span>bols
-and <span
-class="math inline"><em>N</em><em>u</em><em>m</em></span>bers</h2>
+<h2 id="our-structure">Our Structure</h2>
+<p>This document is structure around a study of real world data miners,
+working at Mcirosoft <a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>. That work showed that actually
+“modeling training” (i.e. running the data mining algorithms) was only
+around 10% of a larger process. In the bigger process, much time needs
+to be spent determining the goals of the learning, checking the data up
+front, then monitoring the deployed AI since:</p>
+<blockquote>
+<p>Data mining can be very error prone; so we need to check for those
+errors at every step of our process.</p>
+</blockquote>
+<p>When we get to the data mining, for those of you that like “rolling
+your own”, we present a tiny home brew data mining tool kit that does
+clustering, rule learning, tree learning, optimization in just 200 lines
+of code. The lesson of this first part is that:</p>
+<blockquote>
+<p>Many of these AI tools are very simple and can be created and
+combined using very little coding.</p>
+</blockquote>
+<p>After that, we repeat all the presentation using a standard machine
+learning library (scikit-learn). The lesson of this second part is
+that:</p>
+<blockquote>
+<p>There are many tools can can help you with your data mining.</p>
+</blockquote>
+<h2 id="installation">Installation</h2>
+<p>Call up a terminal, make sure you have <strong>git</strong> and gawk
+3.1
+dn,mdcdddddddddddddddddddddddddddddddddddd<strong>python3.13</strong>
+(or later) installed, then</p>
+<pre><code>mkdir xai                               # or any other name you line
+cd xai
+git clone http://github.com/timm/moot   # example data
+git clone http://github.com/timm/ezr    # code
+cd erz
+python3 -m ezr -h
+python3 -m ezr -f ../../moot/optimize/config/SS-A.csv</code></pre>
+<p>If that works, you should see something like</p>
+<pre><code>ezr.py (v0.5): lightweight XAI for multi-objective optimization
+(c) 2025, Tim Menzies &lt;timm@ieee.org&gt;, MIT license
+[code](https://github.com/timm/ezr) ::
+[data](https://github.com/timm/moot)
+
+Options:
+
+    -a  acq=near          label with (near|xploit|xplor|bore|adapt)
+    -A  Any=4             on init, how many initial guesses?
+    -B  Budget=30         when growing theory, how many labels?
+    -C  Check=5           budget for checking learned model
+    -D  Delta=smed        effect size test for cliff&#39;s delta
+    -F  Few=128           sample size of data random sampling
+    -K  Ks=0.95           confidence for Kolmogorovâ€&quot;Smirnov test
+    -l  leaf=3            min items in tree leaves
+    -m  m=1               Bayes low frequency param
+    -p  p=2               distance co-efficient
+    -s  seed=1234567891   random number seed
+    -f  file=../moot/optimize/misc/auto93.csv    data file
+    -h                     show help
+
+ File:    ../../moot/optimize/config/SS-A.csv
+ Rows:    1343
+ X:       3
+ Y:       2 Throughput+ Latency-
+ 
+ n:  26   win:   53     if Counters &gt; 7
+ n:  15   win:   60     |  if Counters &gt; 14
+ n:   3   win:   90     |  |  if Spout_wait &gt; 9;
+ n:  12   win:   52     |  |  if Spout_wait &lt;= 9
+ n:   7   win:   63     |  |  |  if Spliters &gt; 4
+ n:   4   win:   66     |  |  |  |  if Spout_wait &lt;= 4;
+ n:   3   win:   59     |  |  |  |  if Spout_wait &gt; 4;
+ n:   5   win:   37     |  |  |  if Spliters &lt;= 4;
+ n:  11   win:   44     |  if Counters &lt;= 14
+ n:   7   win:   48     |  |  if Spout_wait &gt; 4
+ n:   3   win:   52     |  |  |  if Spliters &gt; 4;
+ n:   4   win:   45     |  |  |  if Spliters &lt;= 4;
+ n:   4   win:   37     |  |  if Spout_wait &lt;= 4;
+ n:   4   win:  -84     if Counters &lt;= 7;
+ 
+ Used:  Spout_wait Spliters Counters
+ Best train: 100 hold-out: 63</code></pre>
+<h2 id="symbols-and-numbers">Symbols and Numbers</h2>
 <p>To begin at the beginning, in this world, there are <span
 class="math inline"><em>S</em><em>y</em><em>m</em></span>bols and <span
 class="math inline"><em>N</em><em>u</em><em>m</em></span>bers.</p>
@@ -129,35 +436,41 @@ are discrete things that can be compared (with equal or not
 equals);</li>
 <li><span class="math inline"><em>N</em><em>u</em><em>m</em></span>bers
 can be combined together (using addition, multiplication, etc).</li>
+<li>The difference between <span
+class="math inline"><em>S</em><em>y</em><em>m</em></span>bols and <span
+class="math inline"><em>N</em><em>u</em><em>m</em></span>bers is that
+there is nothing in between each symbol, but numbers can be interpolated
+to fill in that gap (e.g. some new number is the average of two existing
+numbers).</li>
 </ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> types <span class="im">import</span> simplenamespace <span class="im">as</span> o</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Sym(at<span class="op">=</span><span class="dv">0</span>,s<span class="op">=</span><span class="st">&quot; &quot;</span>): </span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> o(it<span class="op">=</span>Sym, </span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>           at<span class="op">=</span>at,   <span class="co"># column number</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>           txt<span class="op">=</span>s,   <span class="co"># text of column name</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>           n<span class="op">=</span><span class="dv">0</span>,     <span class="co"># items seen</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>           has<span class="op">=</span>{})  <span class="co"># symbol counts of items seen</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Num(at<span class="op">=</span><span class="dv">0</span>,s<span class="op">=</span><span class="st">&quot; &quot;</span>): </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> o(it<span class="op">=</span>Num, </span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>           at<span class="op">=</span>at,   <span class="co"># column number</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>           txt<span class="op">=</span>s,   <span class="co"># text of column name</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>           n<span class="op">=</span><span class="dv">0</span>,     <span class="co"># items seen</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>           mu<span class="op">=</span><span class="dv">0</span>,    <span class="co"># mean</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>           sd<span class="op">=</span><span class="dv">0</span>,    <span class="co"># standard deviation</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>           m2<span class="op">=</span><span class="dv">0</span>,    <span class="co"># low-level detail (used to calculate sd)</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>           hi<span class="op">=-</span>big, lo<span class="op">=</span>big,  <span class="co"># smallest and largest value seen</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>           best <span class="op">=</span> <span class="dv">0</span> <span class="cf">if</span> s[<span class="op">-</span><span class="dv">1</span>] <span class="op">==</span> <span class="st">&quot;-&quot;</span> <span class="cf">else</span> <span class="dv">1</span>) <span class="co"># 0,1 = minimize,maximize</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> types <span class="im">import</span> simplenamespace <span class="im">as</span> o</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Sym(at<span class="op">=</span><span class="dv">0</span>,s<span class="op">=</span><span class="st">&quot; &quot;</span>): </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> o(it<span class="op">=</span>Sym, </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>           at<span class="op">=</span>at,   <span class="co"># column number</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>           txt<span class="op">=</span>s,   <span class="co"># text of column name</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>           n<span class="op">=</span><span class="dv">0</span>,     <span class="co"># items seen</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>           has<span class="op">=</span>{})  <span class="co"># symbol counts of items seen</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Num(at<span class="op">=</span><span class="dv">0</span>,s<span class="op">=</span><span class="st">&quot; &quot;</span>): </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> o(it<span class="op">=</span>Num, </span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>           at<span class="op">=</span>at,   <span class="co"># column number</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>           txt<span class="op">=</span>s,   <span class="co"># text of column name</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>           n<span class="op">=</span><span class="dv">0</span>,     <span class="co"># items seen</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>           mu<span class="op">=</span><span class="dv">0</span>,    <span class="co"># mean</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>           sd<span class="op">=</span><span class="dv">0</span>,    <span class="co"># standard deviation</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>           m2<span class="op">=</span><span class="dv">0</span>,    <span class="co"># low-level detail (used to calculate sd)</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>           hi<span class="op">=-</span>big, lo<span class="op">=</span>big,  <span class="co"># smallest and largest value seen</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>           best <span class="op">=</span> <span class="dv">0</span> <span class="cf">if</span> s[<span class="op">-</span><span class="dv">1</span>] <span class="op">==</span> <span class="st">&quot;-&quot;</span> <span class="cf">else</span> <span class="dv">1</span>) <span class="co"># 0,1 = minimize,maximize</span></span></code></pre></div>
 <p><span class="math inline"><em>N</em><em>u</em><em>m</em></span>s and
 <span class="math inline"><em>S</em><em>y</em><em>m</em></span>s have a
 central tendency which is called the mean (<span
 class="math inline"><em>m</em><em>u</em></span>) or median for numerics
 and symbolics. Given a dictionary of symbol counts, the median is the
 key with maximum value:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mid(col: o) <span class="op">-&gt;</span> Atom:</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Get central tendency of one column&quot;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="bu">max</span>(col.has, key<span class="op">=</span>col.has.get) <span class="cf">if</span> col.it <span class="kw">is</span> Sym <span class="cf">else</span> col.mu</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mid(col: o) <span class="op">-&gt;</span> Atom:</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Get central tendency of one column&quot;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="bu">max</span>(col.has, key<span class="op">=</span>col.has.get) <span class="cf">if</span> col.it <span class="kw">is</span> Sym <span class="cf">else</span> col.mu</span></code></pre></div>
 <p><span class="math inline"><em>N</em><em>u</em><em>m</em></span>s and
 <span class="math inline"><em>S</em><em>y</em><em>m</em></span>s also
 know how much their values tend to diverge from from the central
@@ -165,12 +478,12 @@ tendency. For <span
 class="math inline"><em>N</em><em>u</em><em>m</em></span>s, this is
 called the standard deviation which normally extends <span
 class="math inline">±3</span> standard deviations around the mean.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> div(col:o) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Return the central tendency for one column.&quot;</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> col.it <span class="kw">is</span> Num: <span class="cf">return</span> col.sd</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  vs <span class="op">=</span> col.has.values()</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  N  <span class="op">=</span> <span class="bu">sum</span>(vs)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">-</span><span class="bu">sum</span>(p<span class="op">*</span>math.log(p,<span class="dv">2</span>) <span class="cf">for</span> n <span class="kw">in</span> vs <span class="cf">if</span> (p<span class="op">:=</span>n<span class="op">/</span>N) <span class="op">&gt;</span> <span class="dv">0</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> div(col:o) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Return the central tendency for one column.&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> col.it <span class="kw">is</span> Num: <span class="cf">return</span> col.sd</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  vs <span class="op">=</span> col.has.values()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  N  <span class="op">=</span> <span class="bu">sum</span>(vs)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">-</span><span class="bu">sum</span>(p<span class="op">*</span>math.log(p,<span class="dv">2</span>) <span class="cf">for</span> n <span class="kw">in</span> vs <span class="cf">if</span> (p<span class="op">:=</span>n<span class="op">/</span>N) <span class="op">&gt;</span> <span class="dv">0</span>)</span></code></pre></div>
 <p><span class="math inline"><em>S</em><em>y</em><em>m</em></span>s and
 <span class="math inline"><em>N</em><em>u</em><em>m</em></span>s can be
 stored in rows and rows can be stored in a <span
@@ -216,15 +529,16 @@ each cluster;</li>
 distinguishing better and worst things (this is called “active
 learning”).</li>
 </ul>
-<div class="sourceCode" id="cb4"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Data(src) <span class="op">-&gt;</span> o:</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Create data structure from source rows&quot;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  src <span class="op">=</span> <span class="bu">iter</span>(src)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> adds(src, o(it<span class="op">=</span>Data, n<span class="op">=</span><span class="dv">0</span>, mid<span class="op">=</span><span class="va">None</span>, rows<span class="op">=</span>[], kids<span class="op">=</span>[], </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                     ys<span class="op">=</span><span class="va">None</span>, cols<span class="op">=</span>Cols(<span class="bu">next</span>(src)))) </span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clone(data:Data, rows<span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> o:</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Create new Data with same columns but different rows&quot;</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> adds(rows <span class="kw">or</span> [], Data([data.cols.names]))</span></code></pre></div>
+<p>XXX nums, x and ys</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode py"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Data(src) <span class="op">-&gt;</span> o:</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Create data structure from source rows&quot;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  src <span class="op">=</span> <span class="bu">iter</span>(src)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> adds(src, o(it<span class="op">=</span>Data, n<span class="op">=</span><span class="dv">0</span>, mid<span class="op">=</span><span class="va">None</span>, rows<span class="op">=</span>[], kids<span class="op">=</span>[], </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                     ys<span class="op">=</span><span class="va">None</span>, cols<span class="op">=</span>Cols(<span class="bu">next</span>(src)))) </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clone(data:Data, rows<span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> o:</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">&quot;Create new Data with same columns but different rows&quot;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> adds(rows <span class="kw">or</span> [], Data([data.cols.names]))</span></code></pre></div>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
 eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
 minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
@@ -232,5 +546,18 @@ ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
 voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
 sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
 mollit anim id est laborum.</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>S. Amershi et al., <a
+href="https://www.microsoft.com/en-us/research/wp-content/uploads/2019/03/amershi-icse-2019_Software_Engineering_for_Machine_Learning.pdf">Software
+Engineering for Machine Learning: A Case Study</a>, 2019 IEEE/ACM 41st
+International Conference on Software Engineering: Software Engineering
+in Practice (ICSE-SEIP), Montreal, QC, Canada, 2019, pp. 291-300, doi:
+10.1109/ICSE-SEIP.2019.00042.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
 </body>
 </html>
