@@ -6,7 +6,7 @@ body {
 }
 code { background: #fcfcfc; padding: 0.1em 0.3em; border-radius: 3px; }
 pre code {
-   font-size: 85%;
+   xfont-size: 85%;
    background: #EEE; <!-- #f7f7f7; -->
    border: 1px solid #ddd;
    border-radius: 4px;
