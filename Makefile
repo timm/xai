@@ -3,4 +3,4 @@ docs/%.html : %.md
 	open $@
 
 push:
-	git commit -am push; git push
+	git commit -am push; git push; git status
