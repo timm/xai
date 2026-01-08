@@ -1,0 +1,49 @@
+# aliases
+alias ls="\ls --color"
+alias grep='grep --color=auto'
+alias tree='tree -C'
+alias mymux='tmux -u -f ../etc/tmux.rc'
+alias col='column -s, -t'
+
+# environment
+export EDITOR="$(command -v nano)"
+export BASH_SILENCE_DEPRECATION_WARNING=1
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+
+# bash-only history behavior
+if [ -n "$BASH_VERSION" ]; then
+  export HISTCONTROL=ignoredups:erasedups
+fi
+
+# zsh-only history behavior
+if [ -n "$ZSH_VERSION" ]; then
+  setopt HIST_IGNORE_ALL_DUPS
+  setopt HIST_REDUCE_BLANKS
+fi
+
+
+# git helpers (portable)
+branch() {
+  git branch 2>/dev/null | awk '/^\*/ {print $2}'
+}
+
+dirty() {
+  [[ -n $(git status -s 2>/dev/null) ]] && echo "*"
+}
+
+# prompt 
+bold=$(tput bold)
+col0=$(tput sgr0)
+col1=$(tput setaf 6)
+col2=$(tput setaf 3)
+
+_prompt_string='${bold}${col1}$(basename "$(dirname "$PWD")")/$(basename "$PWD")${col0} ${col2}$(branch)$(dirty)${col0} ▶ '
+
+if [ -n "$ZSH_VERSION" ]; then
+  setopt PROMPT_SUBST
+  PROMPT="$_prompt_string"
+else
+  PROMPT_COMMAND='PS1="'"$_prompt_string"'"'
+fi
+
