@@ -290,84 +290,51 @@ def go__disty(file=the.data):
 def go__bins(file=the.data):
   "FILE : show the rankings of nins"
   data = Data(csv(file))
-  all_bins = (b for col in data.cols.x for b in cutsRows(col, data.rows, data))
+  all_bins = (b for col in data.cols.x for b in cutsAll(col, data.rows, data))
   for b in sorted(all_bins, key=lambda b: cutScore(b)):
     print(f"{cutShow(b):20}", o(mu=b.y.mu, sd=sd(b.y), n=b.y.n, 
                                scored= cutScore(b)),sep="\t")
 
-def go__tree(file=the.data, repeats=1):
-  "FILE : compare results from all rows vs a tree build from a few rows"
-  data = Data(csv(file))
-  b4   = sorted([disty(data,row) for row in data.rows])
-  lo   = b4[0]
-  mid  = b4[len(b4)//2]
-  Y    = lambda row: disty(data,row)
-  win  = lambda row: int(100*(1- (Y(row) - lo)/ (mid - lo + 1/BIG)))
-  nums = Num()
-  wins = Num()
-  n    = len(data.rows)//2
-  for _ in range(repeats):
-    rows = shuffle(data.rows)
-    test = rows[n:]
-    train= clone(data,rows[:n][:the.Budget-the.Check])
-    uses=set()
-    tree = treeGrow(train,uses=uses)
-    if repeats == 1: treeShow(tree,width=35)
-    X = lambda row: treeLeaf(tree,row).mu
-    guess = min(sorted(test,key=X)[:the.Check],key=Y)
-    if repeats==1:
-      print(o(uses=len(uses), x=len(data.cols.x), y=len(data.cols.y), rows=len(data.rows),
-              lo=lo, mid=mid, guess=Y(guess), win=win(guess)))
-    else:
-      add(nums, Y(guess))
-      add(wins, win(guess))
-  if repeats>1:
-    print(o(wins=wins.mu, n=nums.n, lo=lo, mid=mid, guess=o(nums.mu)),
-         re.sub(r".*/","",file))
-    
-def go__xais(file=the.data): go__tree(file,repeats=20)
+def go__tree(file=the.data): 
+  "FILE : run the optimizer once, show the tree"
+  data    = Data(csv(file)) 
+  lo, mid = go_tree_stats(data) 
+  rows    = shuffle(data.rows) 
+  n       = len(rows) // 2
+  best,tree,uses = trainTest(data,rows[:n][:the.Budget - the.Check],rows[n:])
+  treeShow(tree, width=35)
+  d = disty(data, best)
+  print(o(uses=len(uses), x=len(data.cols.x), y=len(data.cols.y),
+          rows=len(data.rows), ylo=lo, ymid=mid, guess=d, 
+          score=go_tree_score(d, lo, mid)))
 
-# def stats(data):
-#   out = sorted(disty(data, r) for r in data.rows)
-#   return out[0], out[len(out)//2] 
-#
-# def trainTest(data, train, test):
-#   uses=set()
-#   tree = treeGrow(clone(data, train),uses=uses)
-#   ranking = sorted(test, key=lambda r: treeLeaf(tree, r).mu)
-#   return min(ranking[:the.Check], key=lambda r: disty(data, r)), tree, uses
-#
-# def score(d, lo, mid):
-#   return int(100*(1- (d - lo)/ (mid - lo + 1/BIG)))
-#
-# # ----------------------------------------------------------------------------
-# def go__tree(file=the.data): 
-#   "FILE : run the optimizer once, show the tree"
-#   data    = Data(csv(file)) 
-#   lo, mid = stats(data) 
-#   rows    = shuffle(data.rows) 
-#   n       = len(rows) // 2
-#   best,tree,uses = trainTest(data,rows[:n][:the.Budget - the.Check],rows[n:])
-#   treeShow(tree, width=35)
-#   d = disty(data, best)
-#   print(o(uses=len(uses), x=len(data.cols.x), y=len(data.cols.y),
-#           rows=len(data.rows), ylo=lo, ymid=mid, guess=d, 
-#           score=score(d, lo, mid)))
-#
-# def go__xais(file=the.data, repeats=20): 
-#   "FILE : run the optimizer 20 times, show stats"
-#   data    = Data(csv(file)) 
-#   lo, mid = stats(data) 
-#   wins, guesses = Num(), Num()
-#   for _ in range(repeats):
-#     rows = shuffle(data.rows) 
-#     n    = len(rows) // 2
-#     best, _, _ = trainTest(data, rows[:n][:the.Budget - the.Check], rows[n:])
-#     d = disty(data, best)
-#     add(guesses, d)
-#     add(wins, score(d, lo, mid))
-#   print(o(wins=wins.mu, n=guesses.n, lo=lo, mid=mid, guess=o(guesses.mu)),
-#          re.sub(r".*/","",file))
+def go_tree_stats(data):
+  out = sorted(disty(data, r) for r in data.rows)
+  return out[0], out[len(out)//2] 
+
+def trainTest(data, train, test):
+  uses=set()
+  tree = treeGrow(clone(data, train),uses=uses)
+  ranking = sorted(test, key=lambda r: treeLeaf(tree, r).mu)
+  return min(ranking[:the.Check], key=lambda r: disty(data, r)), tree, uses
+
+def go_tree_score(d, lo, mid):
+  return int(100*(1- (d - lo)/ (mid - lo + 1/BIG)))
+
+def go__xais(file=the.data, repeats=20): 
+  "FILE : run the optimizer 20 times, show stats"
+  data    = Data(csv(file)) 
+  lo, mid = go_tree_stats(data) 
+  wins, guesses = Num(), Num()
+  for _ in range(repeats):
+    rows = shuffle(data.rows) 
+    n    = len(rows) // 2
+    best, _, _ = trainTest(data, rows[:n][:the.Budget - the.Check], rows[n:])
+    d = disty(data, best)
+    add(guesses, d)
+    add(wins, go_tree_score(d, lo, mid))
+  print(o(wins=int(wins.mu), n=guesses.n, lo=lo, mid=mid, guess=o(guesses.mu)),
+         re.sub(r".*/","",file))
 
 #-----------------------------------------------------------------------------
 def main(funs,settings):
