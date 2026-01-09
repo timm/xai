@@ -6,7 +6,8 @@
 [![Purpose XAI](https://img.shields.io/badge/Purpose-XAI-orange?labelColor=FB8C00&color=A85A00)](https://github.com/timm/six/blob/main/README.md)
 [![Goal Multi-Obj](https://img.shields.io/badge/Goal-Multi--Obj-purple?labelColor=C026D3&color=6D1780)](https://github.com/timm/six/blob/main/README.md)
 [![Deps 0](https://img.shields.io/badge/Deps-0-green?labelColor=00C853&color=006B29)](https://timm.github.io/xai/xai.html)
-[![LOC ~200](https://img.shields.io/badge/LOC-~200-yellow?labelColor=FDE047&color=C3A700)](https://github.com/timm/xai)
+[![LOC ~250](https://img.shields.io/badge/LOC-~250-yellow?labelColor=FDE047&color=C3A700)](https://github.com/timm/xai)
+[![Docs](https://img.shields.io/badge/Docs-Live-red?labelColor=DC2626&color=7F1D1D&logo=readthedocs&logoColor=white)](https://timm.github.io/xai/docs/)
 
 
 

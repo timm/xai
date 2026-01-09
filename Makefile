@@ -18,16 +18,20 @@ ghReset:
 
 #------------------------
 # xai speicif stuff
+Data=~/gits/moot/optimize/misc/auto93.csv
 
-tree: ok
-	./xai.py --tree ~/gits/moot/optimize/misc/auto93.csv
+tree: ok ## show explanation tree
+	./xai.py --tree $(Data)
 
-xais: ok
-	./xai.py --xais ~/gits/moot/optimize/misc/auto93.csv
+xais: ok ## run 20 times
+	./xai.py --xais $(Data)
 
 ~/gits/moot:  ## get the data
 	mkdir -p ~/gits
 	git clone http://tiny.cc/moot $@
+
+tests: ## test all
+	./xai.py --all $(Data)
 
 #--------------------------
 MY=@bash sh/ell

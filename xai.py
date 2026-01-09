@@ -32,7 +32,6 @@ Options:
 import ast,sys,random,re
 from math import sqrt,exp,floor
 from types import SimpleNamespace as obj
-from pathlib import Path
 
 BIG=1e32
 
@@ -71,7 +70,7 @@ def add(i, v, inc=1):
           i.mu = i.m2= i.n=0
         else:
           d = v-i.mu; i.mu += inc*d/i.n; i.m2 += inc*d*(v-i.mu)
-      else:
+      else: # Data is i.it
         i._centroid = None # old centroid now out of date
         [add(col, v[col.at], inc) for col in i.cols.all] # recursive add 
         (i.rows.append if inc>0 else i.rows.remove)(v)   # row storage
