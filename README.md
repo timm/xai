@@ -11,7 +11,7 @@
 
 
 
-# xai.py: Explainable Multi-Objective Optimization
+### xai.py: Explainable Multi-Objective Optimization
 
 **xai.py** is a lightweight, zero-dependency framework for
 multi-objective optimization. It was developed as a “straw man”
