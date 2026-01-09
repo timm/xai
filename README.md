@@ -2,8 +2,9 @@
 
 **xai.py** is a lightweight, zero-dependency framework for
 multi-objective optimization. It was developed as a “straw man”
-algorothm for baselining more sophisticated approaches. In the following, if there
-simple and cleever ways to do something, XAI used the simpler.
+algorithm for baseline-ing more sophisticated approaches. SO
+if there
+simple and cleever ways to do something, XAI always used the simpler.
 
 (Aside: strange to say, this seemingly simplistic approach works remarkable well. Have
 we been overly complex in our research?)
@@ -15,14 +16,14 @@ we been overly complex in our research?)
 > — John Archibald Wheeler
 
 
- This strangest thing about softwre is that it ever works.   A modest system with 300
+ This strangest thing about software is that it ever works.   A modest system with 300
 boolean variables has 2<sup>300</sup> states—more than the number of
 stars in the observable universe (10<sup>24</sup>). If software
 required us to manage every one of those states, we would never ship
 a single line of code.
 
 Yet, software *does* work. We build the Web, flight controllers,
-and banking systems and and and.... 
+and banking systems and,  and and.... 
 
 Sure that software sometimes does not work. Software sometimes crashes—perhaps at the most
 awkward or dangerous moment. But the fact that it ever works at all, ever, is puzzling.
@@ -88,18 +89,18 @@ the 4 "keys."
 ## Why do I call this "X" for explanation
 
 Internally, XAI is a regression tree learner where the goal is a aggregation of multiple
-goals. The trees are built from tiny samples of the date (just a few dozen rows) so the resuting
+goals. The trees are built from tiny samples of the date (just a few dozen rows) so the resting
 trees are always very small.
 
-Traditonally, decision trees for single goals may not be a good explanation tool since they can
-grow incomprehensiabily large. But I've found that for multi-goal reasoning, when learned
-on a few dozens examples, the resulting tree is effecive for sorting hold-out data good to bad
+Traditionally, decision trees for single goals may not be a good explanation tool since they can
+grow incomprehensibly large. But I've found that for multi-goal reasoning, when learned
+on a few dozens examples, the resulting tree is effective for sorting hold-out data good to bad
 (so all yu need to do is look at ,say, the five top items in that sort).
 
 And when we compare that approach to other methods (LIME, SHAP, etc) we do much better since
-other XAI tools tells you attributes are mportant while my XAI tells you what ranges are improtant (i.e.
+other XAI tools tells you attributes are important while my XAI tells you what ranges are important (i.e.
 my tools tell you that X is im import _up to this point_). This means you can glance at my small trees
-and make polocy decisions about (e.g.) how much to change something.
+and make policy decisions about (e.g.) how much to change something.
 Unlike black-box models (Neural Nets) or feature-weight heuristics (SHAP/LIME), a tiny tree satisfies the complete **Audit of Causal Explanations** by mapping user questions directly to graph traversals.
 
 ```text
@@ -133,12 +134,12 @@ In XAI, if we have (say) three goals
 
     debt, happiness, weath
 
-that we want to minimze, maximize and maxiamize, then "heaven" for those goals is
+that we want to minimize, maximize and maximize, then "heaven" for those goals is
 
     0,1,1
 
 For each row of data, we can look at the _y_ values, normalizing them 0..1 then score them by their
-disttance to heaven. E.g. if i have average debt (.5), high happiness (.75) and high wealth (.8)
+distance to heaven. E.g. if i have average debt (.5), high happiness (.75) and high wealth (.8)
 then that the distance to heaven is
 
     sqrt(squred(.5-0) + squared(.75 - 1) + squared(.8 - 1)) / sqrt(3)
@@ -147,7 +148,7 @@ then that the distance to heaven is
 
 Note that _smaller_ distance are _better_ since that means we are getting closer to heaven.
 
-All the _x_ inputs are  divited into (say) 7 cuts and we log what "heavens" are seen in each cut. 
+All the _x_ inputs are  divided into (say) 7 cuts and we log what "heavens" are seen in each cut. 
 To divide the x values we track _xmu_ and _xsd_ then cut  _xi_ value
 as follows:
 
@@ -161,33 +162,33 @@ complex integrals.  It uses an approximate  Logistic Sigmoid to
 estimate the normal cumulative distribution function.)
 
 Now that we have the cuts, we add in what "distance to heaven"
-values are seen in each cut. For exanple, here we have split "age"
-into seven cuts. The summary table (in organge) shows where  the
+values are seen in each cut. For example, here we have split "age"
+into seven cuts. The summary table (in Orange) shows where  the
 _y_ values fell.
 
 <img width=700 src="etc/img/margin.png">
 
-XAI looks over all the inuts to see pick the cut with lowest _y_ scores.
+XAI picks the cut with lowest _y_ scores.
 If there is a tie, the _sd_ tells us which one to use.
 For example, in this data,
-we would decide to cut _age_ on _cut4_ sicne the _mu=42.6_
-value in cut4 since that tells us that  this cut is cloest to heaven. Note that _cut4_ ties with _cut0_
+we could decide to cut _age_ on _cut4_ sine since he _mu=42.6_
+value in cut4 since that tells us that  this cut is closet to heaven. Note that _cut4_ ties with _cut0_
 but we ignore _cut0_ since the uncertainty there is higher.
 
-After that, tree generation is just recursive cutting. At each level of the tree, data is split on the best cut.
+After that, tree generation is just recursive cutting. At each level of the tree, the
+roes are split on the best cut.
 XAI then recurses into each split.
 
 ```python
-def treeGrow(data, rows, cut=None, uses=set()):
-  tree = Tree(cut)
+def treeGrow(data, rows, cut=None):
+  tree = Tree(rows,cut)
   if len(rows) > the.leaf*2: # stop when too few rows
     if cut1 := findBestCut(data,rows):
       ok,no = [],[]
       for row in rows: (ok if cutSelects(cut1,row) else no).append(row)
       if ok and no:
-        uses.add(cut1.txt)
-        tree.kids[True]  = treeGrow(data, ok, cut1, uses)
-        tree.kids[False] = treeGrow(data, no, cut1, uses)
+        tree.kids[True]  = treeGrow(data, ok, cut1)
+        tree.kids[False] = treeGrow(data, no, cut1)
   return tree
 ```
 
