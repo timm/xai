@@ -149,15 +149,16 @@ def cutsComplete(col, cuts):
 
 ## Trees -------------------------------------------------------------------
 # Trees recursively cut data.
-def Tree(n, mu, mids, cut, goals):
-  return obj(it=Tree, n=n, mu=mu, mids=mids, cut=cut, kids={}, goals=goals)
+def Tree(data,rows, cut):
+  centroid = mids(clone(data,rows))
+  return obj(it=Tree, n=len(rows) , mu=disty(data,centroid), cut=cut, 
+             kids = {},
+             mids = [centroid[col.at] for col in data.cols.y],
+             goals = [col.txt for col in data.cols.y])
 
 def treeGrow(data, rows=None, cut=None, uses=set()):
   rows = rows or data.rows
-  centroid=mids(clone(data,rows))
-  tree = Tree(len(rows), disty(data,centroid),
-              [centroid[col.at] for col in data.cols.y], cut,
-              [col.txt for col in data.cols.y])
+  tree = Tree(data, rows, cut)
   if len(rows) > the.leaf*2:
     if cut1 := cutBest(data,rows):
       ok,no = [],[]
