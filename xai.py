@@ -112,12 +112,9 @@ def Cut(at,txt,lo,hi):
 
 def cutShow(cut, accept=True):
   s,lo,hi = cut.txt, cut.xlo, cut.xhi
-  if lo == hi: 
-    return f"{s} {'==' if accept else '!='} {lo}"
-  if hi == BIG:
-    return f"{s} {'>=' if accept else '<'} {lo}"
-  if lo == -BIG:
-    return f"{s} {'<' if accept else '>='} {hi}"
+  if lo == hi: return f"{s} {'==' if accept else '!='} {lo}"
+  if hi == BIG: return f"{s} {'>=' if accept else '<'} {lo}"
+  if lo == -BIG: return f"{s} {'<' if accept else '>='} {hi}"
   return f"{lo} <= {s} < {hi}" if accept else f"{s} < {lo} or {s} >= {hi}"
 
 def cutSelects(cut, row):
@@ -158,10 +155,8 @@ def Tree(n, mu, mids, cut, goals):
 def treeGrow(data, rows=None, cut=None, uses=set()):
   rows = rows or data.rows
   centroid=mids(clone(data,rows))
-  tree = Tree(len(rows), 
-              disty(data,centroid),
-              [centroid[col.at] for col in data.cols.y],
-              cut,
+  tree = Tree(len(rows), disty(data,centroid),
+              [centroid[col.at] for col in data.cols.y], cut,
               [col.txt for col in data.cols.y])
   if len(rows) > the.leaf*2:
     if cut1 := cutBest(data,rows):
