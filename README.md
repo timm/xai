@@ -25,7 +25,7 @@ we been overly complex in our research?)
 ## Why Xai.py?
 
 
-> *"In any field, find the strangest thing and explore it."*
+> *"In any field, find the strangest thing and explore it."*     
 > — John Archibald Wheeler
 
 
