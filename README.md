@@ -1,6 +1,6 @@
-<img align=left width=150 src="/etc/img/brain.png"> 
+<img align=left width=150 src="etc/img/brain.png"> 
       
-[&copy; 2025](/LICENSE.md) by [timm](http://timm.fyi)    
+[&copy; 2026](/LICENSE.md) by [timm](http://timm.fyi)    
        
 [![Lua 5.4](https://img.shields.io/badge/Python-3.14-blue?labelColor=1D4ED8&color=0A2A7A)](https://github.com/timm/six/blob/main/README.md)
 [![Purpose XAI](https://img.shields.io/badge/Purpose-XAI-orange?labelColor=FB8C00&color=A85A00)](https://github.com/timm/six/blob/main/README.md)
