@@ -1,0 +1,19 @@
+# Prompts
+
+## xai.1
+
+Generate a groff man page for xai.py. include a para describing the data format. list all flags (eg. -s and --all)
+
+    man ./xai1 # terminal browsing
+    xai,pdf genrated from groff -man -Tps xai.1 | ps2pdf - xai.pdf # pdf
+
+## xaipdoc.html
+
+pdoc -o ~/tmp --force --html xai.py ; open ~/tmp/xai.html
+
+
+## xai.html
+
+See prompt in the "about" page.
+
+

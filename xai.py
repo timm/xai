@@ -4,27 +4,31 @@ xai.py: explainable multi-objective optimzation
 (c) 2025 Tim Menzies, MIT license   
    
 Input is CSV. Header (row 1) defines column roles as follows:   
-  [A-Z]* : Numeric (e.g. "Age").     [a-z]* : Symbolic (e.g. "job").   
-  *+     : Mximize (e.g. "Pay+").    *-     : Minimize (e.g. "Cost-").   
-  *X     : Ignored (e.g. "idX").     ?      : Missing value (not in header)   
+
+    [A-Z]* : Numeric (e.g. "Age").     [a-z]* : Symbolic (e.g. "job").   
+    *+     : Mximize (e.g. "Pay+").    *-     : Minimize (e.g. "Cost-").   
+    *X     : Ignored (e.g. "idX").     ?      : Missing value (not in header)   
    
 For help on command line options:
-  ./xai.py -h
+
+    ./xai.py -h
 
 To install and test, got to http://tiny.cc/xaipy and download file. Then:   
-  chmod +x xai.py   
-  mkdir -p $HOME/gits   # download sample data    
-  git clone http://github.com/timm/moot $HOME/gits/moot   
-  ./xai.py --tree ~/gits/moot/optimize/misc/auto93.csv   
+
+    chmod +x xai.py   
+    mkdir -p $HOME/gits   # download sample data    
+    git clone http://github.com/timm/moot $HOME/gits/moot   
+    ./xai.py --tree ~/gits/moot/optimize/misc/auto93.csv   
    
 Options:   
-  -h                help   
-  -b bins=7         set number of bins for discretization   
-  -B Budget=30      set number of rows to evaluate   
-  -C Check=5        set number of guesses to check   
-  -d data=data.csv  set data to load   
-  -l leaf=2         set examples per leaves in a tree   
-  -s seed=1         set random number seed   """
+
+    -h                help   
+    -b bins=7         set number of bins for discretization   
+    -B Budget=30      set number of rows to evaluate   
+    -C Check=5        set number of guesses to check   
+    -d data=data.csv  set data to load   
+    -l leaf=2         set examples per leaves in a tree   
+    -s seed=1         set random number seed   """
 import ast,sys,random,re
 from math import sqrt,exp,floor
 from types import SimpleNamespace as obj

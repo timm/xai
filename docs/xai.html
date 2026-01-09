@@ -147,6 +147,12 @@
     h2 { font-size: 1.5rem; color: var(--text-head); margin: 2rem 0 1rem 0; letter-spacing: -0.025em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
     h3 { font-size: 1.15rem; color: var(--text-head); margin: 1.5rem 0 0.75rem 0; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
     p { margin-bottom: 1rem; max-width: 70ch; }
+    
+    /* TABLES */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-head); font-weight: 600; background-color: var(--bg); }
+    tr:hover td { background-color: var(--bg); }
 
     /* CARDS */
     .card {
@@ -251,6 +257,7 @@
         <button onclick="switchTab('how-to')" id="btn-how-to">How-To</button>
         <button onclick="switchTab('reference')" id="btn-reference">Reference</button>
         <button onclick="switchTab('explanation')" id="btn-explanation">Explanation</button>
+        <button onclick="switchTab('faq')" id="btn-faq">FAQ</button>
         <button onclick="switchTab('about')" id="btn-about">About</button>
     </nav>
     <div class="controls">
@@ -278,6 +285,19 @@
                     <li><strong>Tree Learning:</strong> Recursively splitting data into "kids" to isolate the best performing rows.</li>
                 </ul>
             </div>
+
+            <div class="card">
+                <h3>The Philosophy: "Backpacking" Code</h3>
+                <p>
+                    Most modern AI tools suffer from "Complexity Theater"—bloated frameworks, heavy dependencies, and opaque logic. 
+                    <strong>XAI.py</strong> is built on the philosophy of "Backpacking":
+                </p>
+                <ul>
+                    <li><strong>Zero Dependencies:</strong> Runs on standard Python 3. No numpy, no pandas, no torch.</li>
+                    <li><strong>Self-Contained:</strong> The entire logic fits in a single file (~200 lines).</li>
+                    <li><strong>Auditable:</strong> You can read, understand, and trust every line of code.</li>
+                </ul>
+            </div>
         </section>
 
         <section id="tutorials">
@@ -293,32 +313,46 @@
 
             <article class="card">
                 <h3>2. Preparing Data</h3>
-                <p>Create a CSV file (e.g., <code>data.csv</code>). The first row must define column names. Use suffixes to define column roles:</p>
+                <p>Create a CSV file (e.g., <code>data.csv</code>). The first row must define column names. Use casing and suffixes to define column roles:</p>
                 <ul>
-                    <li><code>Name</code>: Standard identifier.</li>
-                    <li><code>Age</code>: Numeric independent variable.</li>
+                    <li><code>name</code>: <strong>Lowercase</strong> starts indicate Symbolic/Categorical columns.</li>
+                    <li><code>Age</code>: <strong>Uppercase</strong> starts indicate Numeric columns.</li>
                     <li><code>Salary+</code>: Numeric goal to <strong>maximize</strong> (+).</li>
                     <li><code>Error-</code>: Numeric goal to <strong>minimize</strong> (-).</li>
-                    <li><code>RegionX</code>: Column to <strong>ignore</strong> (X).</li>
+                    <li><code>RegionX</code>: Suffix X indicates column to <strong>ignore</strong>.</li>
                 </ul>
-                <pre><code>Name, Age, Salary+, Error-
-Alice, 25, 50000, 0.1
-Bob, 35, 60000, 0.05
-Charlie, 45, 80000, 0.2</code></pre>
+                <pre><code>name,    Age,  Salary+,  Error-
+alice,   25,   50000,    0.1
+bob,     35,   60000,    0.05
+charlie, 45,   80000,    0.2</code></pre>
             </article>
 
             <article class="card">
-                <h3>3. Building a Tree</h3>
-                <p>Use the <code>--tree</code> flag to generate an explanation tree. This splits the data to find clusters that minimize distance to "heaven" (best goals).</p>
-                <pre><code>./xai.py --tree data.csv</code></pre>
+                <h3>3. Tutorial: The Flight Project (Xomo)</h3>
+                <p>This case study demonstrates how XAI reduces 24 complex variables down to 4 actionable rules.</p>
+                <p><strong>The Data:</strong></p>
+                <pre><code>DATA, AAX, ... (20 cols) ..., TIME, TOOL, EFFORT-, MONTHS-, DEFECTS-, RISKS-
+2.8,  3.8, ...               , 3.0,  2.0,  1681,    35,      9129,     0.0
+2.0,  3.7, ...               , 3.8,  2.0,  2677,    39,      16726,    0.2
+... (hundreds of rows) ...</code></pre>
+
+                <p><strong>Running the Analysis:</strong></p>
+                <p>Use the <code>--tree</code> flag to generate an explanation tree.</p>
+                <pre><code>./xai.py --tree xomo_flight.csv</code></pre>
                 
                 <p><strong>Interpreting Output:</strong></p>
                 <pre><code> 
-.                                                             : 0.38  :  398 :  13.0, 81.0, 0.38
-| age < 19.1                                                  : 0.36  :  162 :  16.0, 78.0, 0.36
-| | age >= 16.6                                               : 0.33  :   61 :  17.0, 72.0, 0.33
-| | | age < 18.0                                              : 0.28  :   31 :  17.0, 70.0, 0.28</code></pre>
-                <p>The tree shows hierarchy. The first number is the mean distance to heaven (lower is better). The logic recursively finds cuts (e.g., <code>age < 19.1</code>) that group better rows together.</p>
+                                     score     N    EFFORT-, MONTHS-, DEFECTS-, RISKS-
+                                     -----    ---   ----------------------------------
+.                                  :   0.38:  398 : 13.0, 81.0, 0.38, 1.2
+| RELY >= 1.2                      :   0.36:  162 : 16.0, 78.0, 0.36, 1.0
+| | PVOL < 3.4                     :   0.33:   61 : 17.0, 72.0, 0.33, 0.8
+| | | AEXP >= 2.2                  :   0.28:   31 : 17.0, 70.0, 0.28, 0.4
+| | | | RISKS- < 2.1               :   0.15:   12 : 5.0, 20.0, 0.1, 0.0</code></pre>
+                <p>
+                    Out of 24 variables, the algorithm identified that only <strong>4 matter</strong> for achieving the best results (lowest score):
+                    High reliability, stable platform (Low PVOL), experienced staff (High AEXP), and low initial risks.
+                </p>
             </article>
         </section>
 
@@ -382,8 +416,8 @@ Charlie, 45, 80000, 0.2</code></pre>
                         <tr><td><code>--distx</code></td><td>FILE</td><td>Sort rows by distance to one row (independent vars).</td></tr>
                         <tr><td><code>--disty</code></td><td>FILE</td><td>Sort rows by distance to heaven (dependent vars).</td></tr>
                         <tr><td><code>--bins</code></td><td>FILE</td><td>Show the rankings of bins.</td></tr>
-                        <tr><td><code>--tree</code></td><td>FILE</td><td>Compare results from all rows vs a tree built from a few rows.</td></tr>
-                        <tr><td><code>--xais</code></td><td>FILE</td><td>Run repeated tree analysis (calls internal `go__xai`).</td></tr>
+                        <tr><td><code>--tree</code></td><td>FILE</td><td>Run the optimizer once, show the tree.</td></tr>
+                        <tr><td><code>--xais</code></td><td>FILE</td><td>Run the optimizer 20 times, show stats (calls internal `go__xais`).</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -419,8 +453,8 @@ Charlie, 45, 80000, 0.2</code></pre>
                         <span class="desc">Represents a range/bin. Attributes: <code>xlo</code>, <code>xhi</code>, <code>y</code> (Num score).</span>
                     </li>
                     <li class="api-item">
-                        <span class="signature">def Tree(n, mu, mids, cut)</span>
-                        <span class="desc">Node in the decision tree. Attributes: <code>kids</code> (dict), <code>cut</code> (rule).</span>
+                        <span class="signature">def Tree(n, mu, mids, cut, goals)</span>
+                        <span class="desc">Node in the decision tree. Attributes: <code>kids</code> (dict), <code>cut</code> (rule), <code>goals</code> (list of goal names).</span>
                     </li>
                 </ul>
 
@@ -463,20 +497,20 @@ Charlie, 45, 80000, 0.2</code></pre>
                         <span class="desc">AHA distance between independent variables (<code>data.cols.x</code>).</span>
                     </li>
                     <li class="api-item">
-                        <span class="signature">def cutRows(data, rows)</span>
+                        <span class="signature">def cutBest(data, rows)</span>
                         <span class="desc">Finds the best single <code>Cut</code> that separates the rows to maximize goal scores.</span>
                     </li>
                     <li class="api-item">
-                        <span class="signature">def cutsRows(col, rows, data)</span>
+                        <span class="signature">def cutsAll(col, rows, data)</span>
                         <span class="desc">Discretizes a specific column into bins based on <code>disty</code> scores.</span>
                     </li>
                     <li class="api-item">
-                        <span class="signature">def treeGrow(data, rows=None, cut=None)</span>
-                        <span class="desc">Recursively builds a <code>Tree</code>. Stops if data size < <code>the.leaf * 2</code>.</span>
+                        <span class="signature">def treeGrow(data, rows=None, cut=None, uses=set())</span>
+                        <span class="desc">Recursively builds a <code>Tree</code>. Stops if data size < <code>the.leaf * 2</code>. Populates <code>uses</code> set.</span>
                     </li>
                     <li class="api-item">
                         <span class="signature">def treeShow(tree, lvl=0, accept=True, width=60, dec=1)</span>
-                        <span class="desc">Prints the tree structure to stdout.</span>
+                        <span class="desc">Prints the tree structure to stdout with scores and population stats.</span>
                     </li>
                     <li class="api-item">
                         <span class="signature">def treeLeaf(tree, row)</span>
@@ -488,6 +522,59 @@ Charlie, 45, 80000, 0.2</code></pre>
 
         <section id="explanation">
             <h1>Concepts & Architecture</h1>
+
+            <div class="card">
+                <h3>Comparison: XAI vs LIME/SHAP</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>LIME / SHAP</th>
+                            <th>XAI.py</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Output</strong></td>
+                            <td>Feature Importance Weights (e.g., "Age is 0.8 important")</td>
+                            <td>Actionable Ranges (e.g., "Age > 40")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Scope</strong></td>
+                            <td>Local (per instance) or Global</td>
+                            <td>Global Rules for "Best" vs "Rest"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Actionability</strong></td>
+                            <td>Low (tells you <em>what</em> matters, not <em>how</em> to change it)</td>
+                            <td>High (tells you exactly what boundaries to target)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Causal Audit: Questions vs. Answers</h3>
+                <p>How XAI answers the fundamental questions of causal auditing:</p>
+                <table>
+                    <tr>
+                        <th>User Question</th>
+                        <th>Tree Answer</th>
+                    </tr>
+                    <tr>
+                        <td>What can I do?</td>
+                        <td>The branches (rules) of the tree.</td>
+                    </tr>
+                    <tr>
+                        <td>What happens if I do that?</td>
+                        <td>The leaf statistics (mean/median of goals).</td>
+                    </tr>
+                    <tr>
+                        <td>How sure are you?</td>
+                        <td>The variance/spread in the leaf cluster.</td>
+                    </tr>
+                </table>
+            </div>
             
             <div class="card">
                 <h3>Sigmoid Normalization</h3>
@@ -514,6 +601,28 @@ val = 1 / (1 + exp(-1.7 * z))</code></pre>
                 <p>To evaluate if a split is "good", the system uses a heuristic score. For a given bin (subset of rows):</p>
                 <p>Score = &#956; + &#963; / (&radic;n + &epsilon;)</p>
                 <p>Where &#956; is the mean distance to heaven, &#963; is the standard deviation, and n is the number of rows. This penalizes small sample sizes and high variance.</p>
+            </div>
+        </section>
+
+        <section id="faq">
+            <h1>FAQ & Design Decisions</h1>
+
+            <div class="card">
+                <h3>Why these default values?</h3>
+                <p><strong><code>bins = 7</code></strong></p>
+                <p>Based on <em>Miller's Law</em> (The Magical Number Seven, Plus or Minus Two). Humans can only hold about 7 items in working memory. Discretizing continuous data into more bins creates distinctions too fine for human cognitive processing.</p>
+
+                <p><strong><code>Budget = 30</code></strong></p>
+                <p>Based on sampling efficiency. In multi-objective optimization, we are looking for a "plateau" of good solutions, not a single needle in a haystack. 30 samples are often statistically sufficient to find the general direction of the pareto frontier.</p>
+            </div>
+
+            <div class="card">
+                <h3>Is Python slow?</h3>
+                <p>
+                    "Premature optimization is the root of all evil." 
+                    For datasets of this nature (thousands of rows, dozens of columns), standard Python is fast enough (sub-second). 
+                    The bottleneck is usually human understanding, not CPU cycles. We prioritize code readability over raw execution speed.
+                </p>
             </div>
         </section>
 
