@@ -34,6 +34,9 @@ vim.opt.laststatus = 2
 -- keymaps -----------------------------------------------------------
 vim.keymap.set("n", "Q", ":quitall<CR>", { noremap = true, silent = true })
 
+-- Toggle spelling with <Leader>s (usually \s)
+vim.keymap.set("n", "<leader>s", ":set spell!<CR>", { silent = true })
+
 -- colors ------------------------------------------------------------
 vim.cmd.colorscheme("sorbet")
 

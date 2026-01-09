@@ -108,11 +108,11 @@ trees are always very small.
 Traditionally, decision trees for single goals may not be a good explanation tool since they can
 grow incomprehensibly large. But I've found that for multi-goal reasoning, when learned
 on a few dozens examples, the resulting tree is effective for sorting hold-out data good to bad
-(so all yu need to do is look at ,say, the five top items in that sort).
+(so all you need to do is look at ,say, the five top items in that sort).
 
 And when we compare that approach to other methods (LIME, SHAP, etc) we do much better since
 other XAI tools tells you attributes are important while my XAI tells you what ranges are important (i.e.
-my tools tell you that X is im import _up to this point_). This means you can glance at my small trees
+my tools tell you that X is important _up to this point_). This means you can glance at my small trees
 and make policy decisions about (e.g.) how much to change something.
 Unlike black-box models (Neural Nets) or feature-weight heuristics (SHAP/LIME), a tiny tree satisfies the complete **Audit of Causal Explanations** by mapping user questions directly to graph traversals.
 
