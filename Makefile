@@ -10,6 +10,9 @@ ok: ~/gits/moot ## set up baseline
 push: ## save to cloud
 	@read -p "Reason? " msg; git commit -am "$$msg"; git push; git status
 
+clean: ## remove pycadhe
+	rm -rf __pycache__
+
 ghReset:
 	git remote set-url origin https://timmenzies@github.com/timmenzies/xai.git
 
