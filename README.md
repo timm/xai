@@ -16,13 +16,14 @@
 ### xai.py: Explainable Multi-Objective Optimization
 
 **xai.py** is a lightweight, zero-dependency framework for
-multi-objective optimization. It was developed as a “straw man”
-algorithm for baseline-ing more sophisticated approaches. SO
-if there
-simple and cleever ways to do something, XAI always used the simpler.
+explicable multi-objective optimization. It was developed as a “straw man”
+algorithm for baseline-ing more sophisticated approaches. 
+If there is ever 
+simple and clever ways to do something, XAI always used the simpler.
 
-(Aside: strange to say, this seemingly simplistic approach works remarkable well. Have
-we been overly complex in our research?)
+The result is 250 lines (plus some test cases) that works remarkable well. 
+At the very least, it is a teaching tool or a baseline that can hghlightthe advantage of more sophisticated methods.
+At the very most, its a challenge to the research orthodoxy that complex big data methdos are the only and best way to do anything.
 
 ## Why Xai.py?
 
