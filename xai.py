@@ -10,7 +10,7 @@ Input is CSV. Header (row 1) defines column roles as follows:
     *X     : Ignored (e.g. "idX").     ?      : Missing value (not in header)   
    
 For help on command line options:
-
+	⁃	
     ./xai.py -h
 
 To install and test, got to http://tiny.cc/xaipy and download file. Then:   
