@@ -21,8 +21,15 @@ def norm(n,mu,sd):
 def Num(): return obj(it=Num, n=0,mu=0,md=0,sd=0)
 
 def Data(names): 
-  return obj(it=Data, rows=[], names=names, ys={}, y=0,
+  return obj(it=Data, rows=[], names=names, ys={}, 
              nums={c:Num() for c,s in enumerate(names) if s[0].isupper()})
+
+def Row(data, row): 
+  bins = row[:]
+  for c,num in data.nums.items():
+    if (v:= row[c]) != "?": 
+     bins[c] = int(BINS * norm(v,num.mu, num.sd))
+  return obj(it=Row, cells=row, bins=bins, y=0)
 
 def updateStats(num,v):
   if v != "?":
@@ -31,6 +38,13 @@ def updateStats(num,v):
     num.mu += d / num.n
     num.m2 += d * (v - num.mu)
     num.sd  = 0 if n<2 else sqrt(max(0,m2)/(n-1))
+
+def updateYs(data,row):
+  row.y = disty(data,row)
+  for c,v in enumerate(row.bins):
+    if v != "?" and data.names[c][-1] not in "+-X":
+     data.ys[(c,v)] = data.ys.get((c,v),0) + row.y
+  return row
 
 def era(src, size=20):
   cache = []
@@ -45,20 +59,6 @@ def rows(data, era):
       updateStats(num, row[c])
   for row in era: 
     data.rows += [updateYs(data, Row(data,row))]
-
-def Row(data, row): 
-  bins = row[:]
-  for c,num in data.nums.items():
-    if (v:= row[c]) != "?": 
-     bins[c] = int(BINS * norm(v,num.mu, num.sd))
-  return obj(it=Row, cells=row, bins=bins)
-
-def updateYs(data,row):
-  row.y = disty(data,row)
-  for c,num in data.nums.items():
-    if (v:=row.bins[c]) != "?":
-      data.ys[(c,v)] = data.ys.get((c,v),0) + row.y
-  return row
 
 def distx(data,row1,row2):
   xs = data.cols.x
