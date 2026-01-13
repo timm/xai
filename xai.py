@@ -358,3 +358,5 @@ def showHelp(funs, prefix="go_"):
 
 random.seed(the.seed)
 if __name__ == "__main__": the = main(vars(), the)
+
+print(1)
