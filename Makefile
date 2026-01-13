@@ -57,5 +57,18 @@ col: ## demo of my col
 	printf "name,age,city\nalice,30,raleigh\nbob,25,boston\ncarol,40,denver\n" \
 		| bash $(GIT_ROOT)/sh/ell col
 
-
-
+~/tmp/%.pdf: %.py  ## .py ==> .pdf
+	@mkdir -p ~/tmp
+	@echo "pdf-ing $@ ... "
+	@a2ps               \
+		-Br               \
+		--quiet            \
+		--portrait          \
+		--chars-per-line=80  \
+		--line-numbers=1      \
+		--borders=no           \
+		--pro=color             \
+		--columns=2              \
+		-M letter                 \
+		-o - $< | ps2pdf - $@
+	@open $@
