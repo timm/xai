@@ -25,40 +25,40 @@ def Cols(names):
 def Row(data, cells): 
   norm = lambda v,mu,sd: 1/(1+exp(-1.7*max(-3,min(3,(v-mu)/(sd+1/BIG)))))
   bins = cells[:]
-  for c,num1 in data.nums.items():
+  for c,num in data.nums.items():
     if (v:= cells[c]) != "?": 
-      bins[c] = int(BINS * norm(v,num1.mu, num1.sd))
+      bins[c] = int(BINS * norm(v,num.mu, num.sd))
   return obj(it=Row, cells=cells, bins=bins, y=0)
 
-def num(num1,v):
+def numAdd(num,v):
   if v != "?":
-    num1.n++
-    d       = v - num1.mu
-    num1.mu += d / num1.n
-    num1.m2 += d * (v - num1.mu)
-    num1.sd  = 0 if n<2 else sqrt(max(0,m2)/(n-1))
+    num.n++
+    d       = v - num.mu
+    num.mu += d / num.n
+    num.m2 += d * (v - num.mu)
+    num.sd  = 0 if n<2 else sqrt(max(0,m2)/(n-1))
 
-def row(data,row1):
-  row1.y = row1.y or disty(data,row1)
+def rowAdd(data,row):
+  data.rows += [row]
+  row.y = row.y or disty(data,row)
   for c in data.cols.x:
-    if (v:=row1[c]) != "?":
-      data.ys[(c,v)] = data.ys.get((c,v),0) + row1.y
-  return row1
+    if (v:=row[c]) != "?":
+      data.ys[(c,v)] = data.ys.get((c,v),0) + row.y
+  return row
 
-def rows(data, era): 
-  for row1 in era:
-    for c,num1 in data.nums.items(): 
-      num(num1,row1[c])
-  for row1 in era: data.rows += [row(data, Row(data,row1))]
+def rowsAdd(data, era): 
+  [numAdd(num,cells[c]) for cells in era for c,num in data.nums.items()] 
+  for row in era: rowAdd(data, Row(data,row))
 
 def distx(data,row1,row2):
   def dist(a,b):
     if a=b="?": return 1
-    if a=="?": a = (0 if b > BINS-1-b else BINS-1)
-    if b=="?": b = (0 if a > BINS-1-b else BINS-1)
-    return abs(a - b)/ (BINS-1)
+    mid = (BINS - 1) / 2
+    if a=="?": a = (0 if b > mid else BINS-1)
+    if b=="?": b = (0 if a > mid else BINS-1)
+    return abs(a - b) / (BINS-1)
   xs = data.cols.x
-  return sqrt(sum(dist(row1[c], row2[c])**2 for c in xs) / len(xs))
+  return sqrt(sum(dist(row1[c], row2[c])**2 for c in xs) / len(xs)) 
 
 #------------------------------------------------------------------------------
 class obj(dict):
@@ -99,5 +99,6 @@ def go__the() : print(the)
 def go_s(n)   : the.seed=n; random.seed(n)
 
 #------------------------------------------------------------------------------
+the=config()
 random.seed(the.seed)
 if __name__=="__main__": cli(vars(),the,sys.argv)
