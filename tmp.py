@@ -22,6 +22,10 @@ def Cols(names):
              y= (c for c,s in enumerate(names) if s[-1] in "+-!"),
              nums={c:Num() for c,s in enumerate(names) if s[0].isupper()}))
 
+def b2v(b,mu,sd,eps=1/BIG):
+  p = min(1-eps, max(eps, b/BINS))
+  return mu + max(-3, min(3, log(p/(1-p))/1.7)) * (sd + 1/BIG)
+
 def Row(data, cells): 
   norm = lambda v,mu,sd: 1/(1+exp(-1.7*max(-3,min(3,(v-mu)/(sd+1/BIG)))))
   bins = cells[:]
