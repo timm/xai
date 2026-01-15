@@ -21,6 +21,9 @@ vim.opt.shiftwidth = 2
 vim.opt.splitright = true
 vim.opt.splitbelow = true
 
+
+vim.g.netrw_banner = 0
+
 -- undo --------------------------------------------------------------
 vim.opt.undofile = true
 vim.opt.undodir = vim.fn.expand("~/.vim/undo")

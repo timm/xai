@@ -53,7 +53,8 @@ def rowAdd(data,row):
   return row
 
 def rowsAdd(data, era): 
-  [numAdd(num,cells[c]) for cells in era for c,num in data.nums.items()] 
+    if (rows := next(era))
+  [numAdd(num,row[c]) for row in rows for c,num in data.nums.items()] 
   for row in era: rowAdd(data, Row(data,row))
 
 def distx(data,row1,row2):
