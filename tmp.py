@@ -19,7 +19,7 @@ def Data(names): return obj(it=Data, rows=[], cols=Cols(names), ys={})
 def Cols(names):
   return obj(it=Cols, names=names, 
              x= (c for c,s in enumerate(names) if s[-1] not in "+-!X"),
-             y= (c for c,s in enumerate(names) if s[-1] in "+-!"),
+             y= (c for c,s in enumerate(names) if s[-1]     in "+-!"),
              nums={c:Num() for c,s in enumerate(names) if s[0].isupper()}))
 
 def v2b(v,mu,sd,eps=1/BIG):
@@ -44,18 +44,21 @@ def numAdd(num,v):
     num.m2 += d * (v - num.mu)
     num.sd  = 0 if n<2 else sqrt(max(0,m2)/(n-1))
 
-def rowAdd(data,row):
+def dataAdd(data,row):
   data.rows += [row]
   row.y = row.y or disty(data,row)
   for c in data.cols.x:
     if (v:=row[c]) != "?":
+      bins[c] = 
+      if c in data.nums:
       data.ys[(c,v)] = data.ys.get((c,v),0) + row.y
   return row
 
-def rowsAdd(data, era): 
-    if (rows := next(era))
-  [numAdd(num,row[c]) for row in rows for c,num in data.nums.items()] 
-  for row in era: rowAdd(data, Row(data,row))
+def dataAdds(data, src): 
+  for lst in src:
+    for c,num in data,nums.items(): 
+      numAdd(num,lst[c])
+  for row in lst: dataAdd(data,row)
 
 def distx(data,row1,row2):
   def dist(a,b):
