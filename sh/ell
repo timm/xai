@@ -32,7 +32,8 @@ hi() { # usage: command | hi 7 10 12
           { for (i in lite) {
               col = i < 0 ? NF + i + 1 : i
               $col = "\033[1;"lite[i]"m" $col "\033[0m" } 
-            print $0; }' 
+            print $0; }'
+}
 
 # git helpers (portable)
 branch() {
