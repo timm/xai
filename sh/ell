@@ -25,6 +25,15 @@ if [ -n "$ZSH_VERSION" ]; then
   setopt HIST_REDUCE_BLANKS
 fi
 
+hi() { # usage: command | hi 7 10 12
+  gawk -v cols="$*" '
+    BEGIN { split(cols, tmp, " ");
+            for (i in tmp) lite[tmp[i]] = i + 30 }
+          { for (i in lite) {
+              col = i < 0 ? NF + i + 1 : i
+              $col = "\033[1;"lite[i]"m" $col "\033[0m" } 
+            print $0; }' 
+
 # git helpers (portable)
 branch() {
   git branch 2>/dev/null | awk '/^\*/ {print $2}'
