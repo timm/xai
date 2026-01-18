@@ -15,48 +15,61 @@ BIG=1e32
 
 #-------------------------------------------------------------------------------
 # create
-def NUM():       return obj(it=NUM,  n=0, mu=0, m2=0, sd=0)
-def ROW(lst):    return obj(it=ROW,  raw=lst, bins=lst[:], y=0)
+def COL(at=0, txt=" "): return dict(txt=txt, at=0, n=0, goal=txt[-1]!="-")
+def NUM(**d):           return obj(**COL(**d), mu=0, m2=0, symp=True)
+def SYM(**d):           return obj(**COL(**d), has={}, symp=False)
+def ROW(lst):           return obj(raw=lst, bins=lst[:], y=0)
 def DATA(src): 
-  src  = iter(src)
-  data = obj(it=DATA, rows=[], cols=COLS(next(src)))
-  return Data(data,src)
+  src = iter(src)
+  return Data(obj(rows=[], cols=COLS(next(src)), tally={}), src)
 
 def COLS(names):
-  x,y,nums= set(),{},{}
-  for c,s in enumerate(names):
-    if s[-1] not in "+-X": x.add(c)
-    if s[-1]     in "-+" : y[c] = s[-1] != "-"
-    if s[0].isupper()    : nums[c] = NUM()
-  return obj(it=COLS, names=names, x=x, y=y, nums=nums)
+  cols= [(NUM if s[0].isupper() else SYM)(n,s) for n,s in enumerate(names)]
+  return obj(names=names, all=cols,
+             x= [c for c in cols is c.txt[-1] not in "-+X"],
+             y= [c for c in cols is c.txt[-1]     in "-+" ])
 
 #-------------------------------------------------------------------------------
 # update
 def Data(data, lsts):
   for lst in lsts:
-    for c,num in data.cols.nums.items(): Num(num, lst[c])
-    data.rows += [ROW(lst)]
-  data.tally = {}
-  for row in data.rows: Row(data, row)
+    lst = [add(col,v) for col,v in zip(data.cols.all,lst)]
+    data.rows += [ ROW(lst) ]
+  for row in data.rows:
+    row.y = disty(data,row)
+    row.bins = [bin(col,v) for col,v in zip(data.cols.all,row)]
+  data.tally = tally(data)
   return data
 
-def Num(num,v):
-  if v != "?":
-    num.n   += 1
-    d       = v - num.mu
-    num.mu += d / num.n
-    num.m2 += d * (v - num.mu)
-    num.sd  = 0 if num.n < 2 else sqrt(max(0, num.m2) / (num.n - 1))
+def add(col,v):
+  if v != "?": return v
+  col.n += 1
+  if col.symp: 
+    col.has[v] = 1 + col.has.get(v,0)
+  else:
+    d = v-col.mu; col.mu += d/col.n; col.m2 += d*(v - col.mu)
+  return v
+      
+def bin(col,v): 
+  return v=="?" and v or v if col.symp else int(the.bins * norm(col,v))
 
-def Row(data, row):
-  for c,num in data.cols.nums.items():
-    if (v := row.raw[c]) != "?":
-      row.bins[c] = int(the.bins * norm(num,v))
-  row.y = disty(data, row)
-  for c in data.cols.x:
-    if (v := row.bins[c]) != "?":
-      if (c,v) not in data.tally: data.tally[(c,v)] = NUM()
-      Num(data.tally[(c,v)], row.y)
+def tally(data):
+  d={}
+  for row in data.rows: 
+    for b,col in zip(row.bins, data.cols.x): 
+      k = (col.at, b)
+      if k not in d: d[k] = NUM()
+      add(d[k], row.y)
+  return d
+
+#-------------------------------------------------------------------------------
+# query
+def mid(col): return max(col.has, key=col.has.get) if col.symp else col.mu
+
+def spread(col): return ent(col) if col.symp else sd(num)
+
+def sd(num):  return 0 if col.n < 2 else sqrt(col.m2) / (col.n - 1)
+def ent(sym): return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
 
 #-------------------------------------------------------------------------------
 # query
@@ -105,7 +118,7 @@ def Tree(data, rows=None, uses=set()):
              mids= centroid(data1))
 
 def bestcut(data):
-  return min(data.tally.items(), key=lambda x: score(x[1]), default=None): 
+  return min(data.tally.items(), key=lambda x: score(x[1]), default=None) 
 
 def treeLeaf(tree, row):
   if tree.kids:
@@ -182,4 +195,5 @@ def go__tally(f):
 #------------------------------------------------------------------------------
 the = config()
 random.seed(the.seed)
+print(NUM(at=2,txt="Sss"))
 if __name__=="__main__": cli(vars(),the,sys.argv)
