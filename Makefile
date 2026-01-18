@@ -20,6 +20,7 @@ lint: $f.py
 	# disable naming, docstring, and formatting rules
 	@pylint --disable=C0103,C0104,C0105,C0115,C0116,C0321,C0410 \
 		      --disable=E0213 \
+					--disable=R1735 \
 					--disable=W0106,W0201,W0311 $f.py
 
 #------------------------
@@ -70,7 +71,7 @@ col: ## demo of my col
 		-Br               \
 		--quiet            \
 		--portrait          \
-		--chars-per-line=80  \
+		--chars-per-line=85  \
 		--line-numbers=1      \
 		--borders=no           \
 		--pro=color             \
