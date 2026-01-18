@@ -13,115 +13,110 @@ from math import log,exp,sqrt
 BIG=1e32
 
 #-------------------------------------------------------------------------------
-# UPPER CASE functions are constructors
-def COL(at=0, txt=" "): return it(txt=txt, at=at, n=0, goal=txt[-1]!="-")
-def NUM(**d):           return it(**COL(**d), mu=0, m2=0, sym=True)
-def SYM(**d):           return it(**COL(**d), has={}, sym=False)
-def ROW(lst):           return it(raw=lst, bins=lst[:], y=0)
-def DATA(items):          
+# Create
+def COL(at=0,txt=" "): return obj(txt=txt, at=at, n=0, goal=txt[-1]!="-")
+def NUM(**d):          return obj(it=NUM, **COL(**d), mu=0, m2=0)
+def SYM(**d):          return obj(it=SYM, **COL(**d), has={})
+def DATA(items):
   items = iter(items)
-  return Data(it(rows=[], cols=COLS(next(items))), items)
+  return adds(items, obj(it=DATA, n=0, rows=[], cols=COLS(next(items))))
 
 def COLS(names):
   cols= [(NUM if s[0].isupper() else SYM)(at=n,txt=s) for n,s in enumerate(names)]
-  return it(names=names, all=cols,
+  return obj(it=COLS, names=names, all=cols,
             x= [c for c in cols if c.txt[-1] not in "-+X"],
             y= [c for c in cols if c.txt[-1]     in "-+" ])
 
-# go back to rows. but discretize all before tree. and tree when it recurses
-# needs to use base
-
 #-------------------------------------------------------------------------------
-# update
-# BUG discureize using outer
-def Data(data, rows=None):
-  for r in rows or []: data.rows += [add(c,v) for c,v in zip(data.cols.all,r))]
-  return data
+# Update
+def adds(items, it=None):
+  it = it or NUM(); [add(it,item) for item in items]; return it
 
-def add(col,v):
-  if v != "?": 
-    col.n += 1
-    if col.sym: col.has[v] = 1 + col.has.get(v,0)
-    else:
-      d = v-col.mu; col.mu += d/col.n; col.m2 += d*(v - col.mu)
+def add(i,v):
+  if v != "?":
+    i.n += 1
+    if   DATA is i.it: i.rows += [add(c,v[c.at]) for c in i.cols.all]
+    elif  SYM is i.it: i.has[v] = 1 + i.has.get(v,0)
+    elif  NUM is i.it: d = v - i.mu; i.mu += d/i.n; i.m2 += d*(v - i.mu)
+    else: raise TypeError(f"add error on '{type(i)}'")
   return v
 
-def discretize(col,v):
-  return v=="?" and v or v if col.sym else int(the.bins * norm(col,v))
-
-def tally(data):
-  d={}
-  for row in data.rows:
-    for b,col in zip(row.bins, data.cols.x):
-      k = (col.at, b)
-      if k not in d: d[k] = NUM()
-      add(d[k], row.y)
-  return d
-
 #-------------------------------------------------------------------------------
-# query
+# Query
 def mids(data):  return [mid(col) for col in data.cols.all]
-def mid(col):    return mode(col) if col.sym else col.mu
-def mode(sym):   return max(sym.has, key=sym.has.get) 
+def mid(col):    return mode(col) if SYM is col.it else col.mu
+def mode(sym):   return max(sym.has, key=sym.has.get)
 
-def spread(col): return (ent if col.sym else sd)(col)
+def spread(col): return (ent if SYM is col.it else sd)(col)
 def sd(num):     return 0 if num.n < 2 else sqrt(num.m2 / (num.n - 1))
 def ent(sym):    return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
 
-def norm(num,v): return 1 / (1 + exp(-1.7 * max(-3, min(3, z(num,v)))))
 def z(num,v):    return (v -  num.mu) / (num.sd + 1/BIG)
+def norm(num,v): return 1 / (1 + exp( -1.7 * max(-3, min(3, z(num,v)))))
+def bucket(col,v):
+  return v=="?" and v or v if SYM is col.it else int(the.bins * norm(col,v))
 
 def score(num):
   return BIG if num.n < the.leaf else num.mu + num.sd /(sqrt(num.n) + 1/BIG)
 
 def disty(data, row):
-  return minkowski((abs(norm(y,row.raw[y.at]) - y.goal) for y in data.cols.y))
+  return minkowski((abs(norm(y,row[y.at]) - y.goal) for y in data.cols.y))
 
 def minkowski(items):
-    n,d = 0,0
-    for item in items: n,d = n+1, d+item ** the.p
-    return 0 if n==0 else (d / n) ** (1 / the.p)
+  n,d = 0,0
+  for item in items: n, d = n+1, d+item ** the.p
+  return 0 if n==0 else (d / n) ** (1 / the.p)
 
-def b2v(num,b): # inverse normalization
+def b2v(num,b): # inverse discretization
   eps = 1/BIG
   p = min(1 - eps, max(eps, b/the.bins))
   return num.mu + max(-3, min(3, log(p / (1 - p)) / 1.7)) * (num.sd + eps)
 
 #-------------------------------------------------------------------------------
 # tree
-def Tree(data, rows=None, uses=set()):
-  kids, rows = {}, rows or data.rows
-  col, b, data1 = None, None, Data([data.cols.names]+rows)
-  if len(rows) > the.leaf*2:
-    if cut := bestcut(data1):
-      (col,b), _ = cut
-      ok,no = [],[]
-      for r in rows: (ok if r.bins[col]==b else no).append(r)
-      if ok and no:
-        uses.add(col)
-        kids[True]  = Tree(data, ok, uses)
-        kids[False] = Tree(data, no, uses)
-  return it(data=data1, kids=kids, col=col, bin=b,
-             mu= sum(row.y for row in rows) / len(rows),
-             mids= centroids(data1))
+def Tree(data, uses=None):
+  uses = uses or set()
+  def bestcut(rows):
+    d={}
+    for r in rows:
+      y = disty(data,r)
+      for col in data.cols.x:
+        k = (col.at, bucket(col, r[col.at]))
+        if k not in d: d[k] = NUM()
+        add(d[k], y)
+    return min(d.items(), key=lambda x: score(x[1]), default=None)
 
-def bestcut(data):
-  return min(data.tally.items(), key=lambda x: score(x[1]), default=None)
+  def grow(rows):
+    at, b, kids = None, None, {}
+    if len(rows) > the.leaf*2:
+      if cut := bestcut(rows):
+        ((at,b), _) = cut
+        ok, no = [], []
+        for r in rows:
+          (ok if b == has(data,r,at) else no).append(r)
+        if ok and no:
+          uses.add(at)
+          kids = {True:grow(ok), False:grow(no)}
+    return obj(root=data, kids=kids, at=at, bucket=b,
+               x= mids(DATA([data.cols.names]+rows)),
+               y= adds(disty(data,row) for row in rows))
 
-def treeLeaf(tree, row):
-  if tree.kids:
-    return treeLeaf(tree.kids[row.bins[tree.col]==tree.bin], row)
-  return tree
+  return grow(data.rows), uses
+
+def has(data,row,at): return bucket(data.cols.all[at], row[at])
 
 def treeShow(t, lvl=0, cut=".", w=60):
-  if lvl==0:
-    print(f"{'':{w}}  score    N    Goals\n{'':{w}}  -----  ----   -----")
-  print(f"{('| '*(lvl-1)+cut):{w}}: ",end="")
-  print(f"{o(t.mu):6} : {len(t.data.rows):4} : {o(t.mids)}")
+  if not lvl:
+    print(f"{'':{w}}  Score    N    Goals\n{'':{w}}  -----  ----    -----")
+  print(f"{('| '*(lvl-1)+cut):{w}}: {o(t.y):6} : {t.y.n:4} : {o(t.x)}")
+  for k in sorted(t.kids or {}, reverse=True):
+    s = f"{t.root.cols.names[t.at]} {'==' if k else '!='} {t.bucket}"
+    treeShow(t.kids[k], lvl+1, s, w)
+
+def treeLeaf(t, row):
   if t.kids:
-    col = t.data.cols.names[t.col]
-    for k in sorted(t.kids, reverse=True):
-      treeShow(t.kids[k], lvl+1, f"{col} {'==' if k else '!='} {t.bin}", w)
+    return treeLeaf(t.kids[t.bucket == has(t.root, row, t.at)], row)
+  return t
 
 #------------------------------------------------------------------------------
 # lib
@@ -134,7 +129,7 @@ def o(v):
   if hasattr(v, '__dict__'): return f"{type(v).__name__}{o(vars(v))}"
   return v
 
-class it(dict):
+class obj(dict):
   __getattr__, __setattr__, __repr__ = dict.__getitem__, dict.__setitem__, o
 
 def era(items, size=20):
@@ -162,7 +157,7 @@ def csv(fileName):
 #-------------------------------------------------------------------------------
 # cli
 def config(s=__doc__):
-  return it(**{m[0]:cast(m[1]) for m in re.findall(r"(\w+)=(\S+)", s)})
+  return obj(**{m[0]:cast(m[1]) for m in re.findall(r"(\w+)=(\S+)", s)})
 
 def cli(funs,d,flags):
   for n, s in enumerate(flags):
@@ -183,7 +178,7 @@ def go__ys(f):
 def go__tally(f):
   data = DATA(csv(f))
   for (c,b),num in sorted(data.tally.items(), key=lambda x: score(x[1])):
-    print(it(name=data.cols.names[c], bins=b, mu=num.mu, sd=num.sd, n=num.n))
+    print(obj(name=data.cols.names[c], bins=b, mu=num.mu, sd=num.sd, n=num.n))
 
 #------------------------------------------------------------------------------
 the = config()
