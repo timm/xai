@@ -8,7 +8,7 @@ Options:
    -l leaf=2   Min examples in leaf of tree
    -s seed=1   Random number seed
 """
-import re,ast,sys,random
+import re,sys,random
 from math import log,exp,sqrt
 BIG=1e32
 
@@ -30,8 +30,9 @@ def COLS(names):
 
 #-------------------------------------------------------------------------------
 # update
-def Data(data, lsts):
-  for lst in lsts:
+# BUG discureize using outer
+def Data(data, lsts=None):
+  for lst in lsts or []:
     lst = [add(col,v) for col,v in zip(data.cols.all,lst)]
     data.rows += [ ROW(lst) ]
   for row in data.rows:
@@ -68,7 +69,7 @@ def centroid(col):   return max(col.has, key=col.has.get) if col.symp else col.m
 
 def spread(col): return ent(col) if col.symp else sd(col)
 
-def sd(num):  return 0 if num.n < 2 else sqrt(num.m2) / (num.n - 1)
+def sd(num):  return 0 if num.n < 2 else sqrt(num.m2 / (num.n - 1))
 def ent(sym): return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
 
 def score(num):
@@ -78,7 +79,7 @@ def disty(data, row):
   ys = data.cols.y
   return sqrt(sum(abs(norm(y,row.raw[y.at]) - y.goal) for y in ys) / len(ys))
 
-def norm(num,v): 
+def norm(num,v):
   z = max(-3, min(3, (v - num.mu) / (num.sd + 1/BIG)))
   return 1 / (1 + exp(-1.7 * z))
 
@@ -146,26 +147,31 @@ def era(src, size=20):
 
 def shuffle(lst): random.shuffle(lst); return lst
 
-def coerce(s):
-  try: return ast.literal_eval(s)
-  except (ValueError, SyntaxError): return s.strip()
+def cast(s, FUN=(int, float), BOOL={"true": True, "false": False}):
+  for fn in FUN:
+    try: return fn(s)
+    except ValueError: pass
+  return BOOL.get(s, s)
 
 def csv(fileName):
-  with open(fileName,encoding="utf-8") as f:
+  with open(fileName, encoding="utf-8") as f:
     for l in f:
-      if l: yield [coerce(x) for x in l.split(",")]
+      l = re.sub(r'\s+', '', l.split("#")[0]) # no whitespace, skip comments
+      if l:
+        yield [cast(x) for x in l.split(",")]
 
 #-------------------------------------------------------------------------------
 # cli
 def config(s=__doc__):
-  return obj(**{m[0]:coerce(m[1]) for m in re.findall(r"(\w+)=(\S+)", s)})
+  return obj(**{m[0]:cast(m[1]) for m in re.findall(r"(\w+)=(\S+)", s)})
 
 def cli(funs,d,flags):
   for n, s in enumerate(flags):
-    v = coerce(flags[n + 1]) if n < len(flags) - 1 else None
+    v = cast(flags[n + 1]) if n < len(flags) - 1 else None
     if f := funs.get(f"go{s.replace('-', '_')}"): f(v)
     elif (k := s.lstrip("-")[0]) in d: d[k] = v
 
+# need an sd and ent test
 def go_h(_)    : print(__doc__)
 def go__the(_) : print(the)
 def go_s(n)    : the.seed=n; random.seed(n)
@@ -183,5 +189,5 @@ def go__tally(f):
 #------------------------------------------------------------------------------
 the = config()
 random.seed(the.seed)
-print(NUM(at=2,txt="Sss"))
+print(NUM(at=2, txt="Sss"))
 if __name__=="__main__": cli(vars(),the,sys.argv)
