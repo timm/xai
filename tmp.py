@@ -93,7 +93,7 @@ def Tree(data, uses=None):
         ((at,b), _) = cut
         ok, no = [], []
         for r in rows:
-          (ok if b == has(data,r,at) else no).append(r)
+          (ok if b == bucket(data.cols.all[at], r[at]) else no).append(r)
         if ok and no:
           uses.add(at)
           kids = {True:grow(ok), False:grow(no)}
@@ -102,8 +102,6 @@ def Tree(data, uses=None):
                y= adds(disty(data,row) for row in rows))
 
   return grow(data.rows), uses
-
-def has(data,row,at): return bucket(data.cols.all[at], row[at])
 
 def treeShow(t, lvl=0, cut=".", w=60):
   if not lvl:
@@ -115,7 +113,7 @@ def treeShow(t, lvl=0, cut=".", w=60):
 
 def treeLeaf(t, row):
   if t.kids:
-    return treeLeaf(t.kids[t.bucket == has(t.root, row, t.at)], row)
+    return treeLeaf(t.kids[t.bucket == bucket(data.cols.all[at], row[at])], row)
   return t
 
 #------------------------------------------------------------------------------
