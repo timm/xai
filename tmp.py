@@ -64,15 +64,14 @@ def tally(data):
 
 #-------------------------------------------------------------------------------
 # query
-def mid(col): return max(col.has, key=col.has.get) if col.symp else col.mu
+def mids(data): return [mid(col) for col in data.cols.all]
+def mid(col):   return max(col.has, key=col.has.get) if col.symp else col.mu
 
 def spread(col): return ent(col) if col.symp else sd(num)
 
 def sd(num):  return 0 if col.n < 2 else sqrt(col.m2) / (col.n - 1)
 def ent(sym): return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
 
-#-------------------------------------------------------------------------------
-# query
 def score(num): 
   return BIG if num.n < the.leaf else num.mu + num.sd /(sqrt(num.n) + 1/BIG)
 
@@ -88,16 +87,6 @@ def b2v(b,mu,sd): # converts b to a real number (lower bound on each bin)
   eps = 1/BIG
   p = min(1 - eps, max(eps, b/the.bins))
   return mu + max(-3, min(3, log(p / (1 - p)) / 1.7)) * (sd + eps)
-
-def centroid(data,c):
-  if c in data.cols.num: return data.cols.num[c].mu
-  d = {}
-  for row in rows: 
-    if (v := row[c]) != "?": d[v] = 1 + d.get(v,0)
-  return max(d, key = d.get)
-
-def centroids(data):
-  return [centroid(data,c) for c in enumerate(data.cols.names)]
 
 #-------------------------------------------------------------------------------
 # tree
@@ -115,7 +104,7 @@ def Tree(data, rows=None, uses=set()):
         tree.kids[False] = treeGrow(data, no, uses)
   return obj(it=Tree, data=data1, kids=kids, col=col, bin=bin,
              mu= sum(row.y for row in rows) / len(rows),
-             mids= centroid(data1))
+             mids= mids(data1))
 
 def bestcut(data):
   return min(data.tally.items(), key=lambda x: score(x[1]), default=None) 
