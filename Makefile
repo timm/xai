@@ -16,7 +16,7 @@ clean: ## remove pycadhe
 ghReset:  
 	git remote set-url origin https://timmenzies@github.com/timmenzies/xai.git
 
-lint: $f.py  # Lint python file x.py using `make lint f=x`    
+lint: $f.py  ## Lint python file x.py using `make lint f=x`    
 	# disable naming, docstring, and formatting rules
 	@pylint --disable=C0103,C0104,C0105,C0115,C0116,C0321,C0410 \
 		      --disable=E0213 \

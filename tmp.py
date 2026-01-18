@@ -14,40 +14,36 @@ BIG=1e32
 
 #-------------------------------------------------------------------------------
 # UPPER CASE functions are constructors
-def COL(at=0, txt=" "): return dict(txt=txt, at=at, n=0, goal=txt[-1]!="-")
-def NUM(**d):           return obj(**COL(**d), mu=0, m2=0, symp=True)
-def SYM(**d):           return obj(**COL(**d), has={}, symp=False)
-def ROW(lst):           return obj(raw=lst, bins=lst[:], y=0)
-def DATA(src):
+def COL(at=0, txt=" "): return it(txt=txt, at=at, n=0, goal=txt[-1]!="-")
+def NUM(**d):           return it(**COL(**d), mu=0, m2=0, symp=True)
+def SYM(**d):           return it(**COL(**d), has={}, symp=False)
+def ROW(lst):           return it(raw=lst, bins=lst[:], y=0)
+def DATA(src):          
   src = iter(src)
-  return Data(obj(rows=[], cols=COLS(next(src)), tally={}), src)
+  return Data(it(rows=[], cols=COLS(next(src)), src)
 
 def COLS(names):
   cols= [(NUM if s[0].isupper() else SYM)(at=n,txt=s) for n,s in enumerate(names)]
-  return obj(names=names, all=cols,
-             x= [c for c in cols if c.txt[-1] not in "-+X"],
-             y= [c for c in cols if c.txt[-1]     in "-+" ])
+  return it(names=names, all=cols,
+            x= [c for c in cols if c.txt[-1] not in "-+X"],
+            y= [c for c in cols if c.txt[-1]     in "-+" ])
+
+# go back to rows. but discretize all before tree. and tree when it recurses
+# needs to use base
 
 #-------------------------------------------------------------------------------
 # update
 # BUG discureize using outer
-def Data(data, lsts=None):
-  for lst in lsts or []:
-    lst = [add(col,v) for col,v in zip(data.cols.all,lst)]
-    data.rows += [ ROW(lst) ]
-  for row in data.rows:
-    row.y = disty(data,row)
-    row.bins = [discretize(col,v) for col,v in zip(data.cols.all, row.raw)]
-  data.tally = tally(data)
+def Data(data, rows=None):
+  for r in rows or []: data.rows += [add(c,v) for c,v in zip(data.cols.all,r))]
   return data
 
 def add(col,v):
-  if v != "?": return v
-  col.n += 1
-  if col.symp:
-    col.has[v] = 1 + col.has.get(v,0)
-  else:
-    d = v-col.mu; col.mu += d/col.n; col.m2 += d*(v - col.mu)
+  if v != "?": 
+    col.n += 1
+    if col.symp: col.has[v] = 1 + col.has.get(v,0)
+    else:
+      d = v-col.mu; col.mu += d/col.n; col.m2 += d*(v - col.mu)
   return v
 
 def discretize(col,v):
@@ -76,8 +72,13 @@ def score(num):
   return BIG if num.n < the.leaf else num.mu + num.sd /(sqrt(num.n) + 1/BIG)
 
 def disty(data, row):
-  ys = data.cols.y
-  return sqrt(sum(abs(norm(y,row.raw[y.at]) - y.goal) for y in ys) / len(ys))
+  return minkowski((abs(norm(y,row.raw[y.at]) - y.goal) for y in data.cols.y))
+
+def minkowski(src):
+    n,d = 0,0
+    for x in src: 
+      n,d = n+1, d+x ** the.p
+    return 0 if n==0 else (d / n) ** (1 / the.p)
 
 def norm(num,v):
   z = max(-3, min(3, (v - num.mu) / (num.sd + 1/BIG)))
@@ -102,7 +103,7 @@ def Tree(data, rows=None, uses=set()):
         uses.add(col)
         kids[True]  = Tree(data, ok, uses)
         kids[False] = Tree(data, no, uses)
-  return obj(data=data1, kids=kids, col=col, bin=b,
+  return it(data=data1, kids=kids, col=col, bin=b,
              mu= sum(row.y for row in rows) / len(rows),
              mids= centroids(data1))
 
@@ -135,7 +136,7 @@ def o(v):
   if hasattr(v, '__dict__'): return f"{type(v).__name__}{o(vars(v))}"
   return v
 
-class obj(dict):
+class it(dict):
   __getattr__, __setattr__, __repr__ = dict.__getitem__, dict.__setitem__, o
 
 def era(src, size=20):
@@ -163,7 +164,7 @@ def csv(fileName):
 #-------------------------------------------------------------------------------
 # cli
 def config(s=__doc__):
-  return obj(**{m[0]:cast(m[1]) for m in re.findall(r"(\w+)=(\S+)", s)})
+  return it(**{m[0]:cast(m[1]) for m in re.findall(r"(\w+)=(\S+)", s)})
 
 def cli(funs,d,flags):
   for n, s in enumerate(flags):
@@ -184,10 +185,10 @@ def go__ys(f):
 def go__tally(f):
   data = DATA(csv(f))
   for (c,b),num in sorted(data.tally.items(), key=lambda x: score(x[1])):
-    print(obj(name=data.cols.names[c], bins=b, mu=num.mu, sd=num.sd, n=num.n))
+    print(it(name=data.cols.names[c], bins=b, mu=num.mu, sd=num.sd, n=num.n))
 
 #------------------------------------------------------------------------------
 the = config()
 random.seed(the.seed)
-print(NUM(at=2, txt="Sss"))
+print(NUM(txt="Sss"))
 if __name__=="__main__": cli(vars(),the,sys.argv)
