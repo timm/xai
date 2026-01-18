@@ -15,12 +15,12 @@ BIG=1e32
 #-------------------------------------------------------------------------------
 # UPPER CASE functions are constructors
 def COL(at=0, txt=" "): return it(txt=txt, at=at, n=0, goal=txt[-1]!="-")
-def NUM(**d):           return it(**COL(**d), mu=0, m2=0, symp=True)
-def SYM(**d):           return it(**COL(**d), has={}, symp=False)
+def NUM(**d):           return it(**COL(**d), mu=0, m2=0, sym=True)
+def SYM(**d):           return it(**COL(**d), has={}, sym=False)
 def ROW(lst):           return it(raw=lst, bins=lst[:], y=0)
-def DATA(src):          
-  src = iter(src)
-  return Data(it(rows=[], cols=COLS(next(src)), src)
+def DATA(items):          
+  items = iter(items)
+  return Data(it(rows=[], cols=COLS(next(items))), items)
 
 def COLS(names):
   cols= [(NUM if s[0].isupper() else SYM)(at=n,txt=s) for n,s in enumerate(names)]
@@ -41,13 +41,13 @@ def Data(data, rows=None):
 def add(col,v):
   if v != "?": 
     col.n += 1
-    if col.symp: col.has[v] = 1 + col.has.get(v,0)
+    if col.sym: col.has[v] = 1 + col.has.get(v,0)
     else:
       d = v-col.mu; col.mu += d/col.n; col.m2 += d*(v - col.mu)
   return v
 
 def discretize(col,v):
-  return v=="?" and v or v if col.symp else int(the.bins * norm(col,v))
+  return v=="?" and v or v if col.sym else int(the.bins * norm(col,v))
 
 def tally(data):
   d={}
@@ -60,13 +60,16 @@ def tally(data):
 
 #-------------------------------------------------------------------------------
 # query
-def centroids(data): return [centroid(col) for col in data.cols.all]
-def centroid(col):   return max(col.has, key=col.has.get) if col.symp else col.mu
+def mids(data):  return [mid(col) for col in data.cols.all]
+def mid(col):    return mode(col) if col.sym else col.mu
+def mode(sym):   return max(sym.has, key=sym.has.get) 
 
-def spread(col): return ent(col) if col.symp else sd(col)
+def spread(col): return (ent if col.sym else sd)(col)
+def sd(num):     return 0 if num.n < 2 else sqrt(num.m2 / (num.n - 1))
+def ent(sym):    return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
 
-def sd(num):  return 0 if num.n < 2 else sqrt(num.m2 / (num.n - 1))
-def ent(sym): return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
+def norm(num,v): return 1 / (1 + exp(-1.7 * max(-3, min(3, z(num,v)))))
+def z(num,v):    return (v -  num.mu) / (num.sd + 1/BIG)
 
 def score(num):
   return BIG if num.n < the.leaf else num.mu + num.sd /(sqrt(num.n) + 1/BIG)
@@ -74,15 +77,10 @@ def score(num):
 def disty(data, row):
   return minkowski((abs(norm(y,row.raw[y.at]) - y.goal) for y in data.cols.y))
 
-def minkowski(src):
+def minkowski(items):
     n,d = 0,0
-    for x in src: 
-      n,d = n+1, d+x ** the.p
+    for item in items: n,d = n+1, d+item ** the.p
     return 0 if n==0 else (d / n) ** (1 / the.p)
-
-def norm(num,v):
-  z = max(-3, min(3, (v - num.mu) / (num.sd + 1/BIG)))
-  return 1 / (1 + exp(-1.7 * z))
 
 def b2v(num,b): # inverse normalization
   eps = 1/BIG
@@ -139,10 +137,10 @@ def o(v):
 class it(dict):
   __getattr__, __setattr__, __repr__ = dict.__getitem__, dict.__setitem__, o
 
-def era(src, size=20):
+def era(items, size=20):
   cache = []
-  for row in src:
-    cache += [row]
+  for item in items:
+    cache += [item]
     if len(cache) > size: yield shuffle(cache); cache=[]
   if cache: yield shuffle(cache)
 
