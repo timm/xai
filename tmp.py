@@ -63,18 +63,32 @@ def bucket(col,v):
 def score(num):
   return BIG if num.n < the.leaf else num.mu + sd(num) /(sqrt(num.n) + 1/BIG)
 
-def disty(data, row):
-  return minkowski(((norm(y,row[y.at]) - y.goal) for y in data.cols.y))
+def b2v(num,b): # inverse discretization
+  eps = 1/BIG
+  p = min(1 - eps, max(eps, b/the.bins))
+  return num.mu + max(-3, min(3, log(p / (1 - p)) / 1.7)) * (sd(num) + eps)
 
 def minkowski(items):
   n,d = 0,0
   for item in items: n, d = n+1, d+item ** the.p
   return 0 if n==0 else (d / n) ** (1 / the.p)
 
-def b2v(num,b): # inverse discretization
-  eps = 1/BIG
-  p = min(1 - eps, max(eps, b/the.bins))
-  return num.mu + max(-3, min(3, log(p / (1 - p)) / 1.7)) * (sd(num) + eps)
+def disty(data, row):
+  return minkowski(((norm(y,row[y.at]) - y.goal) for y in data.cols.y))
+
+def distx(data,row1,row2):
+  return minkowski(aha(x, row1[x.at], row2[x.at]) for x in data.cols.x)
+
+def aha(col,u,v):
+  if u==v=="?": return 1
+  if SYM is col.it : return u != v
+  u,v = norm(col,u), norm(col,v)
+  u = u if u != "?" else (0 if v>0.5 else 1)
+  v = v if v != "?" else (0 if u>0.5 else 1)
+  return abs(u - v)
+
+def nearest(data, row, rows=None):  
+  return min(rows or data.rows, key=lambda r: distx(data, row, r))
 
 #-------------------------------------------------------------------------------
 # tree
@@ -141,6 +155,12 @@ class obj(dict):
 
 def gauss(mu,sd):
   return mu + 2 * sd * (sum(random.random() for _ in range(3)) - 1.5)
+
+def pick(d,n):
+  n *= random.random()
+  for k,v in d.items(): 
+    if (n := n-v) <= 0: break
+  return k
 
 def era(items, size=20):
   cache = []
