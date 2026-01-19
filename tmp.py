@@ -36,9 +36,9 @@ def adds(items, it=None):
 def add(i,v):
   if v != "?":
     i.n += 1
-    if   DATA is i.it: i.rows += [[add(c,v[c.at]) for c in i.cols.all]]
-    elif  SYM is i.it: i.has[v] = 1 + i.has.get(v,0)
-    elif  NUM is i.it: d = v - i.mu; i.mu += d/i.n; i.m2 += d*(v - i.mu)
+    if   DATA is i.it : i.rows += [[add(c,v[c.at]) for c in i.cols.all]]
+    elif  SYM is i.it : i.has[v] = 1 + i.has.get(v,0)
+    elif  NUM is i.it : d = v - i.mu; i.mu += d/i.n; i.m2 += d*(v - i.mu)
     else: raise TypeError(f"add error on '{type(i)}'")
   return v
 
@@ -132,6 +132,9 @@ def o(v):
 class obj(dict):
   __getattr__, __setattr__, __repr__ = dict.__getitem__, dict.__setitem__, o
 
+def gauss(mu,sd):
+  return mu + 2 * sd * (sum(random.random() for _ in range(3)) - 1.5)
+
 def era(items, size=20):
   cache = []
   for item in items:
@@ -170,17 +173,21 @@ def go_h(_)    : print(__doc__)
 def go__the(_) : print(the)
 def go_s(n)    : the.seed=n; random.seed(n)
 def go__csv(f) : [print(row) for row in list(csv(f))[::40]]
+
+def go__syms(_):
+  syms = adds("aaaabbc", SYM()); assert abs(1.379 - ent(syms)) < .05
+
+def go__nums(_):
+  nums = adds(gauss(10, 1) for _ in range(1000))
+  assert abs(10 - nums.mu) < .05 and abs(1 - sd(nums)) < .05
+
 def go__ys(f):
   data = DATA(csv(f))
   print(*data.cols.names)
+  print(o(mids(data)))
   for row in sorted(data.rows, key=lambda r: disty(data, r))[::40]:
     print(*row,*[bucket(col,row[col.at]) for col in data.cols.y], 
           round(disty(data,row),2))
-
-def go__tally(f):
-  data = DATA(csv(f))
-  for (c,b),num in sorted(data.tally.items(), key=lambda x: score(x[1])):
-    print(obj(name=data.cols.names[c], bins=b, mu=num.mu, sd=sd(num), n=num.n))
 
 #------------------------------------------------------------------------------
 the = config()
