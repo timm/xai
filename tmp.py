@@ -10,7 +10,7 @@ Options:
    -s seed=1   Random number seed
 """
 from math import log,exp,sqrt
-import re,sys,random
+import re,sys,random,traceback
 BIG=1e32
 
 #-------------------------------------------------------------------------------
@@ -165,10 +165,11 @@ def config(s=__doc__):
 def cli(funs,d,flags):
   for n, s in enumerate(flags):
     v = cast(flags[n + 1]) if n < len(flags) - 1 else None
-    if f := funs.get(f"go{s.replace('-', '_')}"): f(v)
+    if f := funs.get(f"go{s.replace('-', '_')}"): 
+      try: f(v)
+      except Exception: traceback.print_exc()
     elif (k := s.lstrip("-")[0]) in d: d[k] = v
 
-# need an sd and ent test
 def go_h(_)    : print(__doc__)
 def go__the(_) : print(the)
 def go_s(n)    : the.seed=n; random.seed(n)
