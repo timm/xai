@@ -4,10 +4,11 @@ six.py: stochastic incremental multi-objective expalanation
 (c) 2025 Tim Menzies, MIT license
 
 Options:
-   -b bins=7   Number of bins
-   -l leaf=2   Min examples in leaf of tree
-   -p p=2      Distance coeffecient
-   -s seed=1   Random number seed
+   -b bins=7    Number of bins
+   -l leaf=4    Min examples in leaf of tree
+   -p p=2       Distance coeffecient
+   -s seed=1    Random number seed
+   -w width=30  Tree display width 
 """
 from math import log,exp,sqrt
 import re,sys,random,traceback
@@ -27,6 +28,8 @@ def COLS(names):
   return obj(it=COLS, names=names, all=cols,
             x= [c for c in cols if c.txt[-1] not in "-+X"],
             y= [c for c in cols if c.txt[-1]     in "-+" ])
+
+def clone(data, rows=None): return DATA([data.cols.names] + (rows or []))
 
 #-------------------------------------------------------------------------------
 # Update
@@ -99,24 +102,28 @@ def Tree(data, uses=None):
           uses.add(at)
           kids = {True:grow(ok), False:grow(no)}
     return obj(root=data, kids=kids, at=at, bucket=b,
-               x= mids(DATA([data.cols.names]+rows)),
+               x= mids(clone(data,rows)),
                y= adds(disty(data,row) for row in rows))
 
   return grow(data.rows), uses
 
-def treeShow(t, lvl=0, cut=".", w=60):
-  if not lvl:
-    print(f"{'':{w}}  Score    N    Goals\n{'':{w}}  -----  ----    -----")
-  print(f"{('| '*(lvl-1)+cut):{w}}: {o(t.y):6} : {t.y.n:4} : {o(t.x)}")
-  for k in sorted(t.kids or {}, reverse=True):
-    s = f"{t.root.cols.names[t.at]} {'==' if k else '!='} {t.bucket}"
-    treeShow(t.kids[k], lvl+1, s, w)
+def treeShow1(t, lvl, cut):
+  w, g = the.width, [t.x[c.at] for c in t.root.cols.y]
+  print(f"{('| '*(lvl-1)+cut):{w}}: {o(t.y.mu):6} : {t.y.n:4} : {o(g)}")
+  [treeShow1(t.kids[k], lvl+1, 
+             f"{t.root.cols.names[t.at]} {'==' if k else '!='} {t.bucket}") 
+   for k in sorted(t.kids or {}, reverse=True)]
 
-def treeLeaf(t, row):
-  if t.kids:
-    what = t.kids[t.bucket == bucket(t.root.cols.all[t.at], row[t.at])]
-    return treeLeaf(t.kids[what], row)
-  return t
+def treeShow(t):
+  w = the.width
+  print(f"{'':{w}}  Score    N     {[c.txt for c in t.root.cols.y]}")
+  print(f"{'':{w}}  -----  ----    ---------")
+  treeShow1(t, 0, ".")
+  print(f"\n{'':{w}}  Discrete Ranges (b2v):")
+  for c in t.root.cols.x:
+    try: print(f"{c.txt:{w}}: {[o(b2v(c,b)) for b in range(the.bins)]}") 
+    except: pass
+  print(f"{'bins':{w}}: {[b for b in range(1,the.bins+1)]}")
 
 #------------------------------------------------------------------------------
 # lib
@@ -189,6 +196,12 @@ def go__ys(f):
   for row in sorted(data.rows, key=lambda r: disty(data, r))[::40]:
     print(*row,*[bucket(col,row[col.at]) for col in data.cols.y], 
           round(disty(data,row),2))
+
+def go__tree(f):
+  data = DATA(csv(f))
+  data1 = clone(data, shuffle(data.rows)[:50])
+  tree,_ = Tree(data1)
+  treeShow(tree)
 
 #------------------------------------------------------------------------------
 the = config()
