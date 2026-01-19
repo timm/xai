@@ -33,6 +33,9 @@ tree: ok ## show explanation tree
 xais: ok ## run 20 times
 	./xai.py --xais $(Data)
 
+ys:
+	@./tmp.py --ys  ~/gits/moot/optimize/misc/auto93.csv | column -t 
+
 ~/gits/moot:  ## get the data
 	mkdir -p ~/gits
 	git clone http://tiny.cc/moot $@

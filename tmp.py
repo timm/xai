@@ -6,10 +6,11 @@ six.py: stochastic incremental multi-objective expalanation
 Options:
    -b bins=7   Number of bins
    -l leaf=2   Min examples in leaf of tree
+   -p p=2      Distance coeffecient
    -s seed=1   Random number seed
 """
-import re,sys,random
 from math import log,exp,sqrt
+import re,sys,random
 BIG=1e32
 
 #-------------------------------------------------------------------------------
@@ -35,7 +36,7 @@ def adds(items, it=None):
 def add(i,v):
   if v != "?":
     i.n += 1
-    if   DATA is i.it: i.rows += [add(c,v[c.at]) for c in i.cols.all]
+    if   DATA is i.it: i.rows += [[add(c,v[c.at]) for c in i.cols.all]]
     elif  SYM is i.it: i.has[v] = 1 + i.has.get(v,0)
     elif  NUM is i.it: d = v - i.mu; i.mu += d/i.n; i.m2 += d*(v - i.mu)
     else: raise TypeError(f"add error on '{type(i)}'")
@@ -51,16 +52,16 @@ def spread(col): return (ent if SYM is col.it else sd)(col)
 def sd(num):     return 0 if num.n < 2 else sqrt(num.m2 / (num.n - 1))
 def ent(sym):    return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n)>0)
 
-def z(num,v):    return (v -  num.mu) / (num.sd + 1/BIG)
+def z(num,v):    return (v -  num.mu) / (sd(num) + 1/BIG)
 def norm(num,v): return 1 / (1 + exp( -1.7 * max(-3, min(3, z(num,v)))))
 def bucket(col,v):
   return v=="?" and v or v if SYM is col.it else int(the.bins * norm(col,v))
 
 def score(num):
-  return BIG if num.n < the.leaf else num.mu + num.sd /(sqrt(num.n) + 1/BIG)
+  return BIG if num.n < the.leaf else num.mu + sd(num) /(sqrt(num.n) + 1/BIG)
 
 def disty(data, row):
-  return minkowski((abs(norm(y,row[y.at]) - y.goal) for y in data.cols.y))
+  return minkowski(((norm(y,row[y.at]) - y.goal) for y in data.cols.y))
 
 def minkowski(items):
   n,d = 0,0
@@ -70,7 +71,7 @@ def minkowski(items):
 def b2v(num,b): # inverse discretization
   eps = 1/BIG
   p = min(1 - eps, max(eps, b/the.bins))
-  return num.mu + max(-3, min(3, log(p / (1 - p)) / 1.7)) * (num.sd + eps)
+  return num.mu + max(-3, min(3, log(p / (1 - p)) / 1.7)) * (sd(num) + eps)
 
 #-------------------------------------------------------------------------------
 # tree
@@ -113,7 +114,8 @@ def treeShow(t, lvl=0, cut=".", w=60):
 
 def treeLeaf(t, row):
   if t.kids:
-    return treeLeaf(t.kids[t.bucket == bucket(data.cols.all[at], row[at])], row)
+    what = t.kids[t.bucket == bucket(t.root.cols.all[t.at], row[t.at])]
+    return treeLeaf(t.kids[what], row)
   return t
 
 #------------------------------------------------------------------------------
@@ -169,17 +171,18 @@ def go__the(_) : print(the)
 def go_s(n)    : the.seed=n; random.seed(n)
 def go__csv(f) : [print(row) for row in list(csv(f))[::40]]
 def go__ys(f):
-    data = DATA(csv(f))
-    print(*data.cols.names)
-    [print(row) for row in sorted(data.rows, key=lambda r: disty(data,r))[::40]]
+  data = DATA(csv(f))
+  print(*data.cols.names)
+  for row in sorted(data.rows, key=lambda r: disty(data, r))[::40]:
+    print(*row,*[bucket(col,row[col.at]) for col in data.cols.y], 
+          round(disty(data,row),2))
 
 def go__tally(f):
   data = DATA(csv(f))
   for (c,b),num in sorted(data.tally.items(), key=lambda x: score(x[1])):
-    print(obj(name=data.cols.names[c], bins=b, mu=num.mu, sd=num.sd, n=num.n))
+    print(obj(name=data.cols.names[c], bins=b, mu=num.mu, sd=sd(num), n=num.n))
 
 #------------------------------------------------------------------------------
 the = config()
 random.seed(the.seed)
-print(NUM(txt="Sss"))
 if __name__=="__main__": cli(vars(),the,sys.argv)
