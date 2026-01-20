@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -B
 import sys, random
-from tmp import DATA,csv,distx,clone,mids,adds
+from tree import DATA,csv,distx,clone,mids,adds
 
 def kmeans(data, k=8, steps=10, loud=False):
   centroids = random.choices(data.rows, k=k)

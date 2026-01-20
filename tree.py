@@ -16,7 +16,7 @@ BIG=1e32
 
 #-------------------------------------------------------------------------------
 # Create
-def COL(at=0,txt=" "): return obj(txt=txt, at=at, n=0, goal=txt[-1]!="-")
+def COL(at=0,txt=" "): return obj(txt=txt, at=at, n=0, goal=txt[-1]!="-", lo={})
 def NUM(**d):          return obj(it=NUM, **COL(**d), mu=0, m2=0)
 def SYM(**d):          return obj(it=SYM, **COL(**d), has={})
 def DATA(items):
@@ -58,7 +58,10 @@ def ent(sym):    return -sum(p*log(p,2) for n in sym.has.values() if (p:=n/sym.n
 def z(num,v):    return (v -  num.mu) / (sd(num) + 1/BIG)
 def norm(num,v): return 1 / (1 + exp( -1.7 * max(-3, min(3, z(num,v)))))
 def bucket(col,v):
-  return v=="?" and v or v if SYM is col.it else int(the.bins * norm(col,v))
+  if v=="?": return v
+  b = v if SYM is col.it else int(the.bins * norm(col,v))
+  col.lo[b] = min(v, col.lo.get(b,v))
+  return b
 
 def score(num):
   return BIG if num.n < the.leaf else num.mu + sd(num) /(sqrt(num.n) + 1/BIG)

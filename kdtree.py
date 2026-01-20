@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -B
 import sys,random
-from tmp import DATA, csv, clone, mids, distx, adds, NUM
+from tree import DATA, csv, clone, mids, distx, adds, NUM
 
 def report(data, groups, loud=False):
   C, stats = [], []

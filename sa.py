@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 -B
 import sys, math, random
-from tmp import csv,distx,disty,gauss,sd,pick,NUM,SYM,DATA,nearest, o
+from tree import csv,distx,disty,gauss,sd,pick,NUM,SYM,DATA,nearest, o
 
 def sa(data, k=4000, m_rate=0.5, loud=False):
   LO, HI = {}, {}
